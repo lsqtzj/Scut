@@ -1,6 +1,4 @@
 ﻿using System;
-using ZyGames.Doudizhu.Bll.Com.Chat;
-using ZyGames.Doudizhu.Bll.Logic;
 using ZyGames.Framework.Game.Service;
 using ZyGames.Framework.Common;
 using ZyGames.Doudizhu.Lang;
@@ -8,7 +6,6 @@ using ZyGames.Doudizhu.Model;
 using ZyGames.Framework.Net;
 using ZyGames.Framework.Game.Contract.Action;
 using ZyGames.Framework.Game.Cache;
-using ZyGames.Framework.Cache.Generic;
 
 
 namespace ZyGames.Doudizhu.Bll.Action
