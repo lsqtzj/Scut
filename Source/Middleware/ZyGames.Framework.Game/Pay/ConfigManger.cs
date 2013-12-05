@@ -21,59 +21,47 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
+using System;
 using ZyGames.Framework.Common.Configuration;
 using ZyGames.Framework.Common.Security;
+using ZyGames.Framework.Data;
 using ZyGames.Framework.Game.Runtime;
 
 namespace ZyGames.Framework.Game.Pay
 {
     internal class ConfigManger
     {
-        private static string _connectionString = string.Empty;
+        private static readonly DbBaseProvider _dbBaseProvider;
 
-        /// <summary>
-        /// 连接的数据驱动提供类型，MSSQL,MYSQL
-        /// </summary>
-        public static string ConnectionProviderType
+        static ConfigManger()
         {
-            get { return ConfigUtils.GetSetting("PayDB_ProviderType"); }
-        }
-        
-        /// <summary>
-        /// 
-        /// </summary>
-        public static string connectionString
-        {
-            get
+            string providerType = ConfigUtils.GetSetting("PayDB_ProviderType");
+            string connectionFormat = ConfigUtils.GetSetting("PayDB_ConnectionString");
+            string dataSource = string.Empty;
+            string userInfo = string.Empty;
+            try
             {
-
-                if (_connectionString == string.Empty)
+                dataSource = ConfigUtils.GetSetting("PayDB_Server");
+                userInfo = ConfigUtils.GetSetting("PayDB_Acount");
+                if (!string.IsNullOrEmpty(userInfo))
                 {
-                    string cString = ConfigUtils.GetSetting("PayDB_ConnectionString");
-                    string dataSource = string.Empty;
-                    string userInfo = string.Empty;
-                    try
-                    {
-                        dataSource = ConfigUtils.GetSetting("PayDB_Server");
-                        userInfo = ConfigUtils.GetSetting("PayDB_Acount");
-                        if (!string.IsNullOrEmpty(userInfo))
-                        {
-                            userInfo = CryptoHelper.DES_Decrypt(userInfo, GameEnvironment.ProductDesEnKey);
-                        }
-                    }
-                    catch
-                    {
-                    }
-                    if (!string.IsNullOrEmpty(dataSource) && !string.IsNullOrEmpty(userInfo))
-                    {
-                        _connectionString = string.Format(cString, dataSource, userInfo);
-                    }
+                    userInfo = CryptoHelper.DES_Decrypt(userInfo, GameEnvironment.ProductDesEnKey);
                 }
-                return _connectionString;
             }
+            catch (Exception)
+            {
+            }
+            string connectionString = "";
+            if (!string.IsNullOrEmpty(dataSource) && !string.IsNullOrEmpty(userInfo))
+            {
+                connectionString = string.Format(connectionFormat, dataSource, userInfo);
+            }
+            _dbBaseProvider = DbConnectionProvider.CreateDbProvider("PayDB", providerType, connectionString);
         }
 
-
-
+        public static DbBaseProvider Provider
+        {
+            get { return _dbBaseProvider; }
+        }
     }
 }
