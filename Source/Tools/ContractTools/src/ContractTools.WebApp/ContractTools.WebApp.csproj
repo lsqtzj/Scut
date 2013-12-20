@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -33,6 +33,22 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="MySql.Data, Version=6.7.4.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Release\6.1.5.3\Lib\MySql.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Release\6.1.5.3\Lib\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="NLog, Version=2.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Release\6.1.5.3\Lib\NLog.dll</HintPath>
+    </Reference>
+    <Reference Include="protobuf-net, Version=2.0.0.594, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Release\6.1.5.3\Lib\protobuf-net.dll</HintPath>
+    </Reference>
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
     <Reference Include="System.Web.ApplicationServices" />
@@ -48,11 +64,16 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Web.Services" />
     <Reference Include="System.EnterpriseServices" />
-    <Reference Include="ZyGames.Framework">
-      <HintPath>..\..\..\..\..\Release\6.0.5.2\Lib\ZyGames.Framework.dll</HintPath>
+    <Reference Include="ZyGames.Framework, Version=6.0.0.30457, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Release\6.1.5.3\Lib\ZyGames.Framework.dll</HintPath>
     </Reference>
-    <Reference Include="ZyGames.Framework.Common">
-      <HintPath>..\..\..\..\..\Release\6.0.5.2\Lib\ZyGames.Framework.Common.dll</HintPath>
+    <Reference Include="ZyGames.Framework.Common, Version=6.0.0.33063, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Release\6.1.5.3\Lib\ZyGames.Framework.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="ZyGames.Framework.Game">
+      <HintPath>..\..\..\..\..\Release\6.1.5.3\Lib\ZyGames.Framework.Game.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -147,6 +168,13 @@
     <Compile Include="SolutionsList.aspx.designer.cs">
       <DependentUpon>SolutionsList.aspx</DependentUpon>
     </Compile>
+    <Compile Include="SyncModelInfo.aspx.cs">
+      <DependentUpon>SyncModelInfo.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="SyncModelInfo.aspx.designer.cs">
+      <DependentUpon>SyncModelInfo.aspx</DependentUpon>
+    </Compile>
     <Compile Include="UnitTest.aspx.cs">
       <DependentUpon>UnitTest.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -172,6 +200,7 @@
     <Content Include="Search.aspx" />
     <Content Include="SolutionAdd.aspx" />
     <Content Include="SolutionsList.aspx" />
+    <Content Include="SyncModelInfo.aspx" />
     <Content Include="Template\ActionIDDefine.txt" />
     <Content Include="AgreementAdd.aspx" />
     <Content Include="AgreementList.aspx" />
