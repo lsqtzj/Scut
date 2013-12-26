@@ -29,11 +29,22 @@ using System.Linq;
 using System.IO;
 using ContractTools.WebApp.Model;
 using System.Collections;
+using ZyGames.Framework.Cache.Generic;
+using ZyGames.Framework.Common.Security;
+using ZyGames.Framework.Model;
 
 namespace ContractTools.WebApp.Base
 {
+    public class TemplateInfo : MemoryEntity
+    {
+        public string Content { get; set; }
+
+    }
+
     public class TemplateHelper
     {
+        private static MemoryCacheStruct<TemplateInfo> _tempCacheSet = new MemoryCacheStruct<TemplateInfo>();
+
         public static Hashtable LoadEnumApplication(int slnid, bool clean)
         {
             if (System.Web.HttpContext.Current.Application[slnid.ToString()] == null || clean)
@@ -64,22 +75,28 @@ namespace ContractTools.WebApp.Base
         /// <returns></returns>
         public static string ReadTemp(string fileName)
         {
-            string temp = string.Empty;
-            using (FileStream fs = File.Open(fileName, FileMode.Open))
+            string code = Path.GetFileName(fileName);
+            TemplateInfo tempInfo;
+            if (!_tempCacheSet.TryGet(code, out tempInfo))
             {
-                StreamReader sr = new StreamReader(fs);
-                temp = sr.ReadToEnd();
+                tempInfo = new TemplateInfo();
+                tempInfo.Content = File.ReadAllText(fileName, Encoding.UTF8);
+                _tempCacheSet.TryAdd(code, tempInfo);
+
             }
-            return temp;
+            return tempInfo.Content;
         }
+
         /// <summary>
         /// 赋值客户端模板
         /// </summary>
         /// <param name="content"></param>
-        /// <param name="respParam"></param>
+        /// <param name="paramList"></param>
+        /// <param name="reqParams"></param>
         /// <param name="title"></param>
+        /// <param name="contractId"></param>
         /// <returns></returns>
-        public static string FromatTempto(string content, int contractId, List<ParamInfoModel> respParam, string title)
+        public static string FromatTempto(string content, int contractId, List<ParamInfoModel> paramList, List<ParamInfoModel> reqParams, string title)
         {
             string[] expressList = new string[] { "##ID##", "##Description##", "##Parameter##", "##Fixed##" };
             foreach (string exp in expressList)
@@ -99,7 +116,7 @@ namespace ContractTools.WebApp.Base
                 else if (fieldBuilder.ToString() == "Parameter")
                 {
                     fieldBuilder.Remove(0, fieldBuilder.Length);
-                    foreach (var paramInfo in respParam)
+                    foreach (var paramInfo in reqParams)
                     {
                         if (paramInfo.ParamType == 1)
                         {
@@ -113,7 +130,7 @@ namespace ContractTools.WebApp.Base
                 else if (fieldBuilder.ToString() == "Fixed")
                 {
                     fieldBuilder.Remove(0, fieldBuilder.Length);
-                    foreach (var paramInfo in respParam)
+                    foreach (var paramInfo in reqParams)
                     {
                         if (paramInfo.ParamType == 1)
                         {
@@ -130,7 +147,7 @@ namespace ContractTools.WebApp.Base
                 content = content.Replace(exp, fieldBuilder.ToString());
 
             }
-            return ReplaceJudgeto(content, respParam);
+            return ReplaceJudgeto(content, paramList);
         }
         public static string GetspaceIndent(int n)
         {
