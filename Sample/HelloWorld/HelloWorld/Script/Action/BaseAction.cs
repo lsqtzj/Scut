@@ -23,44 +23,15 @@ THE SOFTWARE.
 ****************************************************************************/
 
 using System;
-using System.Data;
 using ZyGames.Framework.Game.Service;
 
 namespace HelloWorld.Script.Action
 {
-    /// <summary>
-    /// 1001_hello¡¾ÒÑÍê³É¡¿
-    /// </summary>
-    public class Action1001 : BaseAction
+    public abstract class BaseAction : BaseStruct
     {
-        private string content;
-
-
-        public Action1001(HttpGet httpGet)
-            : base(ActionIDDefine.Cst_Action1001, httpGet)
+        protected BaseAction(short aActionId, HttpGet httpGet)
+            : base(aActionId, httpGet)
         {
-
-        }
-
-        public override void BuildPacket()
-        {
-            this.PushIntoStack(content);
-
-        }
-
-        public override bool GetUrlElement()
-        {
-            if (true)
-            {
-                return true;
-            }
-            return false;
-        }
-
-        public override bool TakeAction()
-        {
-            content = "Hello World";
-            return true;
         }
     }
 }

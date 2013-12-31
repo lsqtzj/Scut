@@ -21,46 +21,22 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
-
 using System;
 using System.Data;
-using ZyGames.Framework.Game.Service;
 
 namespace HelloWorld.Script.Action
 {
+
     /// <summary>
-    /// 1001_hello°æ“—ÕÍ≥…°ø
+    /// ActionIDÂÆö‰πâÊèèËø∞
     /// </summary>
-    public class Action1001 : BaseAction
+    public class ActionIDDefine
     {
-        private string content;
+        ///<summary>
+        ///hello
+        ///</summary>
+        public const Int16 Cst_Action1001 = 1001;
 
 
-        public Action1001(HttpGet httpGet)
-            : base(ActionIDDefine.Cst_Action1001, httpGet)
-        {
-
-        }
-
-        public override void BuildPacket()
-        {
-            this.PushIntoStack(content);
-
-        }
-
-        public override bool GetUrlElement()
-        {
-            if (true)
-            {
-                return true;
-            }
-            return false;
-        }
-
-        public override bool TakeAction()
-        {
-            content = "Hello World";
-            return true;
-        }
     }
 }
