@@ -7,7 +7,7 @@
     <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{8034EE0C-97B5-491D-85A8-193BABC462A4}</ProjectGuid>
-    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <ProjectTypeGuids>{349C5851-65DF-11DA-9384-00065B846F21};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ZyGames.Tianjiexing.Service</RootNamespace>
@@ -40,66 +40,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="ICSharpCode.SharpZipLib">
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\ICSharpCode.SharpZipLib.dll</HintPath>
-    </Reference>
-    <Reference Include="IronPython, Version=2.7.0.40, Culture=neutral, PublicKeyToken=7f709c5b713576e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\IronPython.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="IronPython.Modules, Version=2.7.0.40, Culture=neutral, PublicKeyToken=7f709c5b713576e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\IronPython.Modules.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Dynamic, Version=1.1.0.20, Culture=neutral, PublicKeyToken=7f709c5b713576e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\Microsoft.Dynamic.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Scripting, Version=1.1.0.20, Culture=neutral, PublicKeyToken=7f709c5b713576e1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\Microsoft.Scripting.dll</HintPath>
-      <Private>True</Private>
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
     <Reference Include="Mono.Cecil">
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\Mono.Cecil.dll</HintPath>
-    </Reference>
-    <Reference Include="MySql.Data, Version=6.7.4.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\MySql.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="NLog, Version=2.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\NLog.dll</HintPath>
-    </Reference>
-    <Reference Include="protobuf-net, Version=2.0.0.594, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\protobuf-net.dll</HintPath>
-    </Reference>
-    <Reference Include="ServiceStack, Version=3.7.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\ServiceStack.dll</HintPath>
-    </Reference>
-    <Reference Include="ServiceStack.Common, Version=3.7.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\ServiceStack.Common.dll</HintPath>
-    </Reference>
-    <Reference Include="ServiceStack.Interfaces, Version=3.7.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\ServiceStack.Interfaces.dll</HintPath>
-    </Reference>
-    <Reference Include="ServiceStack.Redis, Version=3.7.4.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\ServiceStack.Redis.dll</HintPath>
-    </Reference>
-    <Reference Include="ServiceStack.Text, Version=3.6.9.2502, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\ServiceStack.Text.dll</HintPath>
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\Mono.Cecil.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -119,17 +63,53 @@
     <Reference Include="System.EnterpriseServices" />
     <Reference Include="System.Web.Mobile" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="ZyGames.Framework, Version=5.5.0.30109, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\ZyGames.Framework.dll</HintPath>
+    <Reference Include="IronPython">
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\IronPython.dll</HintPath>
     </Reference>
-    <Reference Include="ZyGames.Framework.Common, Version=5.5.0.33646, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\ZyGames.Framework.Common.dll</HintPath>
+    <Reference Include="IronPython.Modules">
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\IronPython.Modules.dll</HintPath>
     </Reference>
-    <Reference Include="ZyGames.Framework.Game, Version=3.5.0.27650, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Release\6.1.5.6\Lib\ZyGames.Framework.Game.dll</HintPath>
+    <Reference Include="Microsoft.Dynamic">
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\Microsoft.Dynamic.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Scripting">
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\Microsoft.Scripting.dll</HintPath>
+    </Reference>
+    <Reference Include="MySql.Data">
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\MySql.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="NLog">
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\NLog.dll</HintPath>
+    </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\protobuf-net.dll</HintPath>
+    </Reference>
+    <Reference Include="ServiceStack">
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\ServiceStack.dll</HintPath>
+    </Reference>
+    <Reference Include="ServiceStack.Common">
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\ServiceStack.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="ServiceStack.Interfaces">
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\ServiceStack.Interfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="ServiceStack.Redis">
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\ServiceStack.Redis.dll</HintPath>
+    </Reference>
+    <Reference Include="ServiceStack.Text">
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\ServiceStack.Text.dll</HintPath>
+    </Reference>
+    <Reference Include="ZyGames.Framework">
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\ZyGames.Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="ZyGames.Framework.Common">
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\ZyGames.Framework.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="ZyGames.Framework.Game">
+      <HintPath>..\..\..\..\..\Release\6.1.6.0\Lib\ZyGames.Framework.Game.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -138,204 +118,81 @@
     </Content>
     <Content Include="Game.config.xml" />
     <Content Include="OfficialService.aspx" />
-    <Content Include="PyScript\Action\action1023.py" />
-    <Content Include="PyScript\Action\action12051.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action12052.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action12053.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action12056.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action12057.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action12101.py" />
-    <Content Include="PyScript\Action\action12055.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action12102.py" />
-    <Content Include="PyScript\Action\action12103.py" />
-    <Content Include="PyScript\Action\action1312.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1425.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1611.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action3014.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1008.py" />
-    <Content Include="PyScript\Action\action3013.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action4401.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action4402.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action4403.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action4404.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action4405.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action4406.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action4407.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action4408.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action4409.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action4410.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action4411.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action4412.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Bll\festivalBll.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action5108.py" />
-    <Content Include="PyScript\Lib\action.py" />
-    <Content Include="PyScript\Lib\lang.py" />
-    <Content Include="PyScript\Lib\mathUtils.py" />
-    <Content Include="PyScript\Lib\randomUtils.py" />
-    <Content Include="PyScript\Action\action1092.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1093.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1094.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1114.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1402.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1441.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1442.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1404.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1091.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1446.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1447.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1448.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1449.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1484.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1610.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action3012.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action7011.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action7012.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1444.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1445.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action5408.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action9301.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action9302.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Content Include="Script\PyScript\Action\action1008.py" />
+    <Content Include="Script\PyScript\Action\action1023.py" />
+    <Content Include="Script\PyScript\Action\action1025.py" />
+    <Content Include="Script\PyScript\Action\action1026.py" />
+    <Content Include="Script\PyScript\Action\action1091.py" />
+    <Content Include="Script\PyScript\Action\action1092.py" />
+    <Content Include="Script\PyScript\Action\action1093.py" />
+    <Content Include="Script\PyScript\Action\action1094.py" />
+    <Content Include="Script\PyScript\Action\action1095.py" />
+    <Content Include="Script\PyScript\Action\action1110.py" />
+    <Content Include="Script\PyScript\Action\action1112.py" />
+    <Content Include="Script\PyScript\Action\action1113.py" />
+    <Content Include="Script\PyScript\Action\action1114.py" />
+    <Content Include="Script\PyScript\Action\action12051.py" />
+    <Content Include="Script\PyScript\Action\action12052.py" />
+    <Content Include="Script\PyScript\Action\action12053.py" />
+    <Content Include="Script\PyScript\Action\action12055.py" />
+    <Content Include="Script\PyScript\Action\action12056.py" />
+    <Content Include="Script\PyScript\Action\action12057.py" />
+    <Content Include="Script\PyScript\Action\action12101.py" />
+    <Content Include="Script\PyScript\Action\action12102.py" />
+    <Content Include="Script\PyScript\Action\action12103.py" />
+    <Content Include="Script\PyScript\Action\action1217.py" />
+    <Content Include="Script\PyScript\Action\action1312.py" />
+    <Content Include="Script\PyScript\Action\action1402.py" />
+    <Content Include="Script\PyScript\Action\action1404.py" />
+    <Content Include="Script\PyScript\Action\action1425.py" />
+    <Content Include="Script\PyScript\Action\action1441.py" />
+    <Content Include="Script\PyScript\Action\action1442.py" />
+    <Content Include="Script\PyScript\Action\action1443.py" />
+    <Content Include="Script\PyScript\Action\action1444.py" />
+    <Content Include="Script\PyScript\Action\action1445.py" />
+    <Content Include="Script\PyScript\Action\action1446.py" />
+    <Content Include="Script\PyScript\Action\action1447.py" />
+    <Content Include="Script\PyScript\Action\action1448.py" />
+    <Content Include="Script\PyScript\Action\action1449.py" />
+    <Content Include="Script\PyScript\Action\action1481.py" />
+    <Content Include="Script\PyScript\Action\action1482.py" />
+    <Content Include="Script\PyScript\Action\action1483.py" />
+    <Content Include="Script\PyScript\Action\action1484.py" />
+    <Content Include="Script\PyScript\Action\action1485.py" />
+    <Content Include="Script\PyScript\Action\action1610.py" />
+    <Content Include="Script\PyScript\Action\action1611.py" />
+    <Content Include="Script\PyScript\Action\action3012.py" />
+    <Content Include="Script\PyScript\Action\action3013.py" />
+    <Content Include="Script\PyScript\Action\action3014.py" />
+    <Content Include="Script\PyScript\Action\action3301.py" />
+    <Content Include="Script\PyScript\Action\action3302.py" />
+    <Content Include="Script\PyScript\Action\action360.py" />
+    <Content Include="Script\PyScript\Action\action4401.py" />
+    <Content Include="Script\PyScript\Action\action4402.py" />
+    <Content Include="Script\PyScript\Action\action4403.py" />
+    <Content Include="Script\PyScript\Action\action4404.py" />
+    <Content Include="Script\PyScript\Action\action4405.py" />
+    <Content Include="Script\PyScript\Action\action4406.py" />
+    <Content Include="Script\PyScript\Action\action4407.py" />
+    <Content Include="Script\PyScript\Action\action4408.py" />
+    <Content Include="Script\PyScript\Action\action4409.py" />
+    <Content Include="Script\PyScript\Action\action4410.py" />
+    <Content Include="Script\PyScript\Action\action4411.py" />
+    <Content Include="Script\PyScript\Action\action4412.py" />
+    <Content Include="Script\PyScript\Action\action5108.py" />
+    <Content Include="Script\PyScript\Action\action5408.py" />
+    <Content Include="Script\PyScript\Action\action7011.py" />
+    <Content Include="Script\PyScript\Action\action7012.py" />
+    <Content Include="Script\PyScript\Action\action9006.py" />
+    <Content Include="Script\PyScript\Action\action9301.py" />
+    <Content Include="Script\PyScript\Action\action9302.py" />
+    <Content Include="Script\PyScript\Bll\festivalBll.py" />
+    <Content Include="Script\PyScript\Lib\action.py" />
+    <Content Include="Script\PyScript\Lib\lang.py" />
+    <Content Include="Script\PyScript\Lib\mathUtils.py" />
+    <Content Include="Script\PyScript\Lib\randomUtils.py" />
+    <Content Include="Script\PyScript\Lib\ReferenceLib.py" />
     <Content Include="Service.aspx" />
-    <Content Include="PyScript\Action\action1110.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1217.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1026.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1481.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1482.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1112.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action3301.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action3302.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action9006.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1483.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1443.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1485.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1113.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1025.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action1095.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PyScript\Action\action360.py" />
     <None Include="Web.config">
       <SubType>Designer</SubType>
     </None>
@@ -425,6 +282,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
@@ -434,7 +292,7 @@
   -->
   <ProjectExtensions>
     <VisualStudio>
-      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+      <FlavorProperties GUID="{349C5851-65DF-11DA-9384-00065B846F21}">
         <WebProjectProperties>
           <UseIIS>False</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
@@ -450,5 +308,10 @@
         </WebProjectProperties>
       </FlavorProperties>
     </VisualStudio>
+    <MonoDevelop>
+      <Properties VerifyCodeBehindFields="True" VerifyCodeBehindEvents="True">
+        <XspParameters Port="8080" Address="127.0.0.1" SslMode="None" SslProtocol="Default" KeyType="None" CertFile="" KeyFile="" PasswordOptions="None" Password="" Verbose="True" />
+      </Properties>
+    </MonoDevelop>
   </ProjectExtensions>
 </Project>
