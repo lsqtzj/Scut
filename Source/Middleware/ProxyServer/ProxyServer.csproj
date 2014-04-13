@@ -20,7 +20,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NET4_0</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
@@ -30,28 +30,21 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;NET4_0</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release_Linux|AnyCPU' ">
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Release_Linux</OutputPath>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="protobuf-net">
-      <HintPath>..\..\..\Release\6.1.6.2\Lib\protobuf-net.dll</HintPath>
+      <HintPath>..\..\..\Release\6.1.6.5\Lib\protobuf-net.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.EnterpriseServices" />
     <Reference Include="System.Net" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Web" />
-    <Reference Include="System.Web.Services" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -59,16 +52,16 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Configuration" />
     <Reference Include="ICSharpCode.SharpZipLib">
-      <HintPath>..\..\..\Release\6.1.6.2\Lib\ICSharpCode.SharpZipLib.dll</HintPath>
+      <HintPath>..\..\..\Release\6.1.6.5\Lib\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
     <Reference Include="NLog">
-      <HintPath>..\..\..\Release\6.1.6.2\Lib\NLog.dll</HintPath>
+      <HintPath>..\..\..\Release\6.1.6.5\Lib\NLog.dll</HintPath>
     </Reference>
     <Reference Include="ZyGames.Framework">
-      <HintPath>..\..\..\Release\6.1.6.2\Lib\ZyGames.Framework.dll</HintPath>
+      <HintPath>..\..\..\Release\6.1.6.5\Lib\ZyGames.Framework.dll</HintPath>
     </Reference>
     <Reference Include="ZyGames.Framework.Common">
-      <HintPath>..\..\..\Release\6.1.6.2\Lib\ZyGames.Framework.Common.dll</HintPath>
+      <HintPath>..\..\..\Release\6.1.6.5\Lib\ZyGames.Framework.Common.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -79,11 +72,6 @@
     <Compile Include="GameProxy.cs" />
     <Compile Include="GameServerPool.cs" />
     <Compile Include="MultiKeyDictionary.cs" />
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
     <Compile Include="Service References\com.scutgame.dir\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -96,15 +84,14 @@
     <Compile Include="Util.cs" />
   </ItemGroup>
   <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
     <None Include="NLog.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <None Include="Service References\com.scutgame.dir\DirService.wsdl" />
     <None Include="Service References\com.scutgame.dir\ProxyServer.com.scutgame.dir.GameInfo.datasource">
@@ -115,13 +102,15 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <WCFMetadata Include="Service References\" />
-  </ItemGroup>
-  <ItemGroup>
     <WCFMetadataStorage Include="Service References\com.scutgame.dir\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Service References\com.scutgame.dir\DirService.disco" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Service References\com.scutgame.dir\configuration91.svcinfo">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="Service References\com.scutgame.dir\configuration.svcinfo" />
