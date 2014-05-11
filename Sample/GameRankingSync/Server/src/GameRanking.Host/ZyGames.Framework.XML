@@ -926,6 +926,13 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="M:ZyGames.Framework.Cache.Generic.CacheCollection.Notify(System.Object,ZyGames.Framework.Event.CacheItemEventArgs)">
+            <summary>
+            
+            </summary>
+            <param name="sender"></param>
+            <param name="eventArgs"></param>
+        </member>
         <member name="M:ZyGames.Framework.Cache.Generic.CacheCollection.Dispose(System.Boolean)">
             <summary>
             
@@ -4258,13 +4265,6 @@
             <param name="compareChar"></param>
             <param name="paramName"></param>
             <returns>The expression.</returns>
-            <summary>
-            
-            </summary>
-            <param name="fieldName"></param>
-            <param name="compareChar"></param>
-            <param name="paramName"></param>
-            <returns>The expression.</returns>
         </member>
         <member name="T:ZyGames.Framework.Data.MySql.MySqlCommandStruct">
             <summary>
@@ -4406,6 +4406,14 @@
             <param name="parameters"></param>
             <returns></returns>
         </member>
+        <member name="M:ZyGames.Framework.Data.MySql.MySqlDataProvider.GenerateSql(System.Int32,ZyGames.Framework.Data.CommandStruct)">
+            <summary>
+            
+            </summary>
+            <param name="identityId"></param>
+            <param name="command"></param>
+            <returns></returns>
+        </member>
         <member name="M:ZyGames.Framework.Data.MySql.MySqlDataProvider.CheckTable(System.String,ZyGames.Framework.Data.DbColumn[]@)">
             <summary>
             
@@ -4482,6 +4490,7 @@
             </summary>
             <param name="tableName"></param>
             <param name="editType"></param>
+            <param name="columns"></param>
             <returns></returns>
         </member>
         <member name="M:ZyGames.Framework.Data.MySql.MySqlDataProvider.CreateCommandFilter">
@@ -4746,6 +4755,14 @@
             <param name="commandType"></param>
             <param name="commandText"></param>
             <param name="parameters"></param>
+            <returns></returns>
+        </member>
+        <member name="M:ZyGames.Framework.Data.Sql.SqlDataProvider.GenerateSql(System.Int32,ZyGames.Framework.Data.CommandStruct)">
+            <summary>
+            
+            </summary>
+            <param name="identityId"></param>
+            <param name="command"></param>
             <returns></returns>
         </member>
         <member name="M:ZyGames.Framework.Data.Sql.SqlDataProvider.CheckTable(System.String,ZyGames.Framework.Data.DbColumn[]@)">
@@ -5609,6 +5626,11 @@
             实体数据基类
             </summary>
         </member>
+        <member name="F:ZyGames.Framework.Model.AbstractEntity.KeyCodeJoinChar">
+            <summary>
+            
+            </summary>
+        </member>
         <member name="F:ZyGames.Framework.Model.AbstractEntity.DefIdentityId">
             <summary>
             
@@ -5667,6 +5689,11 @@
             </summary>
         </member>
         <member name="F:ZyGames.Framework.Model.AbstractEntity._isNew">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:ZyGames.Framework.Model.AbstractEntity._isDelete">
             <summary>
             
             </summary>
@@ -6207,7 +6234,12 @@
             </summary>
             <param name="type"></param>
         </member>
-        <!-- 对于成员“M:ZyGames.Framework.Model.EntitySchemaSet.ExportSync(System.String)”忽略有格式错误的 XML 注释 -->
+        <member name="M:ZyGames.Framework.Model.EntitySchemaSet.ExportSync(System.String)">
+            <summary>
+            Export to sync model format content.
+            </summary>
+            <returns></returns>
+        </member>
         <member name="M:ZyGames.Framework.Model.EntitySchemaSet.ExportSync(ZyGames.Framework.Model.SchemaTable)">
             <summary>
             Export entity schema for client sync.
@@ -6258,6 +6290,13 @@
             
             </summary>
             <param name="type"></param>
+            <returns></returns>
+        </member>
+        <member name="M:ZyGames.Framework.Model.EntitySchemaSet.Get(System.String)">
+            <summary>
+            
+            </summary>
+            <param name="typeName"></param>
             <returns></returns>
         </member>
         <member name="M:ZyGames.Framework.Model.EntitySchemaSet.Get``1">
@@ -7562,6 +7601,11 @@
             连接池管理
             </summary>
         </member>
+        <member name="F:ZyGames.Framework.Redis.RedisConnectionPool.EntityKeyPreChar">
+            <summary>
+            
+            </summary>
+        </member>
         <member name="M:ZyGames.Framework.Redis.RedisConnectionPool.Initialize">
             <summary>
             init
@@ -7918,6 +7962,11 @@
             消息头
             </summary>
         </member>
+        <member name="F:ZyGames.Framework.RPC.IO.MessageHead.DefaultSt">
+            <summary>
+            default st
+            </summary>
+        </member>
         <member name="M:ZyGames.Framework.RPC.IO.MessageHead.#ctor">
             <summary>
             
@@ -7927,6 +7976,15 @@
             <summary>
             
             </summary>
+            <param name="action"></param>
+            <param name="errorCode"></param>
+            <param name="errorInfo"></param>
+        </member>
+        <member name="M:ZyGames.Framework.RPC.IO.MessageHead.#ctor(System.Int32,System.Int32,System.Int32,System.String)">
+            <summary>
+            
+            </summary>
+            <param name="msgId"></param>
             <param name="action"></param>
             <param name="errorCode"></param>
             <param name="errorInfo"></param>
@@ -8033,6 +8091,12 @@
             
             </summary>
             <param name="buffer"></param>
+        </member>
+        <member name="M:ZyGames.Framework.RPC.IO.MessageStructure.Dispose(System.Boolean)">
+            <summary>
+            
+            </summary>
+            <param name="disposing"></param>
         </member>
         <member name="M:ZyGames.Framework.RPC.IO.MessageStructure.Reset">
             <summary>
@@ -11825,6 +11889,11 @@
             <param name="fileCode">文件编号</param>
             <param name="fileName">完整路径和文件名</param>
         </member>
+        <member name="F:ZyGames.Framework.Script.ScriptFileInfo._type">
+            <summary>
+            
+            </summary>
+        </member>
         <member name="M:ZyGames.Framework.Script.ScriptFileInfo.TryEnterLock">
             <summary>
             lock
@@ -11987,6 +12056,16 @@
         <member name="T:ZyGames.Framework.Script.ScriptEngines">
             <summary>
             脚本对象引擎
+            </summary>
+        </member>
+        <member name="F:ZyGames.Framework.Script.ScriptEngines.CSharpDirName">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:ZyGames.Framework.Script.ScriptEngines.PythonDirName">
+            <summary>
+            
             </summary>
         </member>
         <member name="M:ZyGames.Framework.Script.ScriptEngines.SetPythonOptions(System.String,System.Object)">
