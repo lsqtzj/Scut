@@ -376,15 +376,7 @@ namespace ZyGames.Framework.RPC.Sockets
                 }
             } while (remainingBytesToProcess != 0);
             #endregion
-
-            if (needPostAnother)
-            {
-                if (dataToken.prefixBytesDone == 4 && dataToken.IsMessageReady)
-                    dataToken.Reset(true);
-                dataToken.bufferSkip = 0;
-                PostReceive(ioEventArgs);
-            }
-
+            //modify reason:数据包接收事件触发乱序
             foreach (var m in msgs)
             {
                 try
@@ -396,6 +388,19 @@ namespace ZyGames.Framework.RPC.Sockets
                     TraceLog.WriteError("OnDataReceived error:{0}", ex);
                 }
             }
+
+            if (needPostAnother)
+            {
+                //处理下个请求包
+                if (dataToken.prefixBytesDone == 4 && dataToken.IsMessageReady)
+                {
+                    dataToken.Reset(true);
+                }
+                dataToken.bufferSkip = 0;
+                PostReceive(ioEventArgs);
+            }
+
+            
         }
 
         private void TryDequeueAndPostSend(ExSocket socket, SocketAsyncEventArgs ioEventArgs)
@@ -530,15 +535,14 @@ namespace ZyGames.Framework.RPC.Sockets
                 {
                     TraceLog.WriteError("OnDisconnected error:{0}", ex);
                 }
-                ioEventArgs.AcceptSocket.Close();
+                ResetSAEAObject(ioEventArgs);
             }
             ReleaseIOEventArgs(ioEventArgs);
         }
 
         private void HandleBadAccept(SocketAsyncEventArgs acceptEventArgs)
         {
-            acceptEventArgs.AcceptSocket.Close();
-            acceptEventArgs.AcceptSocket = null;
+            ResetSAEAObject(acceptEventArgs);
             acceptEventArgsPool.Push(acceptEventArgs);
             maxConnectionsEnforcer.Release();
         }
@@ -582,13 +586,25 @@ namespace ZyGames.Framework.RPC.Sockets
             while (this.acceptEventArgsPool.Count > 0)
             {
                 eventArgs = acceptEventArgsPool.Pop();
-                eventArgs.Dispose();
+                ResetSAEAObject(eventArgs);
             }
             while (this.ioEventArgsPool.Count > 0)
             {
                 eventArgs = ioEventArgsPool.Pop();
-                eventArgs.Dispose();
+                ResetSAEAObject(eventArgs);
             }
+        }
+
+        private static void ResetSAEAObject(SocketAsyncEventArgs eventArgs)
+        {
+            try
+            {
+                eventArgs.AcceptSocket.Close();
+            }
+            catch (Exception)
+            {
+            }
+            eventArgs.AcceptSocket = null;
         }
     }
 }
