@@ -36,6 +36,11 @@ using ZyGames.Framework.Model;
 namespace ZyGames.Framework.Script
 {
     /// <summary>
+    /// script loaded delegate
+    /// </summary>
+    public delegate void ScriptLoaded(string type, string[] files);
+
+    /// <summary>
     /// 脚本对象引擎
     /// </summary>
     public class ScriptEngines
@@ -45,6 +50,17 @@ namespace ZyGames.Framework.Script
         private static List<FileSystemWatcher> _watcherList;
         private static HashSet<string> _changedFiles;
         private static Timer _changeWatchingTimer;
+
+        /// <summary>
+        /// Script loaded event
+        /// </summary>
+        public static event ScriptLoaded OnLoaded;
+
+        private static void DoScriptLoaded(string type, string[] files)
+        {
+            ScriptLoaded handler = OnLoaded;
+            if (handler != null) handler(type, files);
+        }
 
         /// <summary>
         /// Is error
@@ -119,26 +135,27 @@ namespace ZyGames.Framework.Script
                 _settupInfo.ModelChangedBefore(_runtimeDomain.Scope.ModelAssembly);
             }
 
-            _runtimeDomain = new ScriptRuntimeDomain(typeof(ScriptRuntimeDomain).Name, new[] { _settupInfo.RuntimePath, ScriptCompiler.ScriptPath });
+            _runtimeDomain = new ScriptRuntimeDomain(typeof(ScriptRuntimeDomain).Name, new[] { _settupInfo.RuntimePrivateBinPath, ScriptCompiler.ScriptPath });
 
             ScriptDomainContext domainContext = _runtimeDomain.InitDomainContext();
+
             foreach (var assemblyName in _settupInfo.ReferencedAssemblyNames)
             {
                 //排除System的dll
                 if (string.IsNullOrEmpty(assemblyName) ||
-                    assemblyName.IndexOf(":") == -1) continue;
+                   !Path.IsPathRooted(assemblyName)) continue;
                 string key = Path.GetFileNameWithoutExtension(assemblyName);
                 domainContext.LoadAssembly(key, assemblyName);
             }
 
             var scope = _runtimeDomain.CreateScope(_settupInfo);
-
+            if (scope == null) return scope;
             PrintCompiledMessage();
             if (!isFirstRun && _settupInfo.ModelChangedAfter != null)
             {
                 _settupInfo.ModelChangedAfter(scope.ModelAssembly);
             }
-            else
+            else if (scope.ModelAssembly != null)
             {
                 ProtoBufUtils.LoadProtobufType(scope.ModelAssembly);
                 EntitySchemaSet.LoadAssembly(scope.ModelAssembly);
@@ -176,6 +193,7 @@ namespace ZyGames.Framework.Script
                     {
                         break;
                     }
+
                     string ext = group.Key.ToLower();
                     switch (ext)
                     {
@@ -203,6 +221,7 @@ namespace ZyGames.Framework.Script
                         default:
                             throw new NotSupportedException(string.Format("Script type \"{0}\" not supported.", ext));
                     }
+                    DoScriptLoaded(ext, group.ToArray());
                 }
 
             }

@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -53,8 +54,6 @@ namespace ZyGames.Framework.Script
         public CSharpRuntimeScope(ScriptSettupInfo settupInfo)
             : base(settupInfo)
         {
-            _modelCodeCache = new DictionaryExtend<string, ScriptFileInfo>();
-            _csharpCodeCache = new DictionaryExtend<string, ScriptFileInfo>();
         }
 
         /// <summary>
@@ -71,6 +70,8 @@ namespace ZyGames.Framework.Script
         /// </summary>
         public override void Init()
         {
+            _modelCodeCache = new DictionaryExtend<string, ScriptFileInfo>();
+            _csharpCodeCache = new DictionaryExtend<string, ScriptFileInfo>();
             _modelScriptPath = Path.Combine(SettupInfo.RuntimePath, SettupInfo.ScriptRelativePath, SettupInfo.ModelScriptPath);
             AddWatchPath(_modelScriptPath, FileFilter);
 
@@ -211,6 +212,7 @@ namespace ZyGames.Framework.Script
                 t.Value.Source = null;
                 return src;
             }).ToArray();
+            if (sources.Length == 0) return;
             //加载实体程序集
             _modelAssembly = ScriptCompiler.InjectionCompile(SettupInfo.RuntimePrivateBinPath, sources, refAssemblyNames, assemblyName, SettupInfo.ScriptIsDebug, false, out _modelAssemblyPath);
 
@@ -227,6 +229,7 @@ namespace ZyGames.Framework.Script
                 t.Value.Source = null;
                 return SettupInfo.ScriptIsDebug ? t.Value.FileName : src;
             }).ToArray();
+            if (sources.Length == 0) return;
 
             //调试模式使用File编译
             var result = SettupInfo.ScriptIsDebug
@@ -357,6 +360,8 @@ namespace ZyGames.Framework.Script
             var assmeblyList = GetAssemblies();
             foreach (var assmebly in assmeblyList)
             {
+                if (assmebly == null) continue;
+
                 pyCode.AppendFormat(@"clr.AddReference('{0}')", assmebly.GetName().Name);
                 pyCode.AppendLine();
             }
