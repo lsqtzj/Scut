@@ -105,6 +105,11 @@ namespace ZyGames.Framework.Cache.Generic
         }
 
         /// <summary>
+        /// 是否集合
+        /// </summary>
+        public bool HasCollection { get; internal set; }
+
+        /// <summary>
         /// 是否为空
         /// </summary>
         public bool IsEmpty
@@ -187,7 +192,7 @@ namespace ZyGames.Framework.Cache.Generic
 
         private void PutToChangeKeys(AbstractEntity entity)
         {
-            DataSyncQueueManager.Send(new[] { entity });
+            DataSyncQueueManager.Send(entity);
         }
 
         /// <summary>
@@ -234,6 +239,7 @@ namespace ZyGames.Framework.Cache.Generic
                 return _period != null && _period.IsPeriod;
             }
         }
+
 
         /// <summary>
         /// 加载成功

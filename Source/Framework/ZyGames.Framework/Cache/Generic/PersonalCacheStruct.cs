@@ -23,7 +23,6 @@ THE SOFTWARE.
 ****************************************************************************/
 using System;
 using System.Collections.Generic;
-using ZyGames.Framework.Collection.Generic;
 using ZyGames.Framework.Common;
 using ZyGames.Framework.Common.Log;
 using ZyGames.Framework.Data;
@@ -83,7 +82,10 @@ namespace ZyGames.Framework.Cache.Generic
                 if (!collection.TryGetValue(key, out data))
                 {
                     //修正旧版本无personalId参数调用
-                    key = string.IsNullOrEmpty(key) ? personalId : AbstractEntity.CreateKeyCode(personalId, key);
+                    var tempKeys = new List<object>();
+                    tempKeys.Add(personalId);
+                    if (keys.Length > 0) tempKeys.AddRange(keys);
+                    key = string.IsNullOrEmpty(key) ? personalId : AbstractEntity.CreateKeyCode(tempKeys.ToArray());
                     collection.TryGetValue(key, out data);
                 }
             }
@@ -102,6 +104,19 @@ namespace ZyGames.Framework.Cache.Generic
             TryFindKey(personalId, out data, keys);
             return data;
         }
+
+        /// <summary>
+        /// 取子类的Key,不需要personalId,不加载数据
+        /// </summary>
+        /// <param name="keys"></param>
+        /// <returns></returns>
+        public T TakeSubKey(params object[] keys)
+        {
+            string key = AbstractEntity.CreateKeyCode(keys);
+            return DataContainer.TakeEntityFromKey(key);
+        }
+
+
         /// <summary>
         /// 
         /// </summary>
@@ -212,7 +227,7 @@ namespace ZyGames.Framework.Cache.Generic
         }
 
         /// <summary>
-        /// 在整个缓存中查找
+        /// 在整个缓存中查找,不加载数据
         /// </summary>
         /// <param name="match">查找匹配条件</param>
         /// <returns></returns>
@@ -280,6 +295,22 @@ namespace ZyGames.Framework.Cache.Generic
         }
 
         /// <summary>
+        /// 从Redis加载所有缓存
+        /// </summary>
+        /// <param name="match"></param>
+        public void LoadFrom(Predicate<T> match)
+        {
+            string redisKey = CreateRedisKey();
+            TransReceiveParam receiveParam = new TransReceiveParam(redisKey);
+            receiveParam.Schema = SchemaTable();
+            int maxCount = receiveParam.Schema.Capacity;
+            var filter = new DbDataFilter(maxCount);
+            receiveParam.DbFilter = filter;
+            receiveParam.Capacity = maxCount;
+            LoadFrom(receiveParam, match);
+        }
+
+        /// <summary>
         /// 增加
         /// </summary>
         /// <param name="t"></param>
@@ -322,7 +353,7 @@ namespace ZyGames.Framework.Cache.Generic
             //Model实体设置检查
             if ("10000".Equals(key))
             {
-                TraceLog.WriteError("Entity:{0} GetIdentityId method set value is error.", DataContainer.RootKey);
+                TraceLog.WriteError("The {0} entity's attr cacheType is share.", DataContainer.RootKey);
             }
             return ProcessLoadParam(key);
         }
@@ -344,8 +375,11 @@ namespace ZyGames.Framework.Cache.Generic
             if (provider != null)
             {
                 var filter = new DbDataFilter(maxCount);
-                filter.Condition = provider.FormatFilterParam(paramName);
-                filter.Parameters.Add(paramName, personalId);
+                if (!string.IsNullOrEmpty(personalId))
+                {
+                    filter.Condition = provider.FormatFilterParam(paramName);
+                    filter.Parameters.Add(paramName, personalId);
+                }
                 receiveParam.DbFilter = filter;
             }
             receiveParam.Capacity = maxCount;

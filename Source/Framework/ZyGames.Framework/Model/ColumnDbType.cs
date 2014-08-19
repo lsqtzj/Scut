@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
-using System;
 
 namespace ZyGames.Framework.Model
 {
@@ -49,6 +48,18 @@ namespace ZyGames.Framework.Model
         /// <summary>
         /// Text
         /// </summary>
-        Text
+        Text,
+        /// <summary>
+        /// 
+        /// </summary>
+        LongText,
+        /// <summary>
+        /// 
+        /// </summary>
+        Blob,
+        /// <summary>
+        /// 
+        /// </summary>
+        LongBlob,
     }
 }

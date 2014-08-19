@@ -8,7 +8,7 @@ public class Action1000 : GameAction
     {
     }
 
-    protected override void SendParameter(NetWriter writer, object userData)
+    protected override void SendParameter(NetWriter writer, ActionParam actionParam)
     {
         writer.writeString("UserName", "Jon");
         writer.writeInt32("Score", 100);
@@ -18,7 +18,8 @@ public class Action1000 : GameAction
     {
     }
 
-    protected override void Process(object userData)
+    public override ActionResult GetResponseData()
     {
+		return null;
     }
 }

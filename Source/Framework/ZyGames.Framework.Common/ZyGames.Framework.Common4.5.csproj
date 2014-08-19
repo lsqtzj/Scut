@@ -74,6 +74,9 @@
     <Compile Include="Build\WeavingEntityTask.cs" />
     <Compile Include="Configuration\ConfigUtils.cs" />
     <Compile Include="Event\CustomEvent.cs" />
+    <Compile Include="Event\EventNotifier.cs" />
+    <Compile Include="Event\NotifyEventArgs.cs" />
+    <Compile Include="Event\TimeoutNotifyEventArgs.cs" />
     <Compile Include="HttpUtils.cs" />
     <Compile Include="Locking\ILocking.cs" />
     <Compile Include="Locking\IMonitorStrategy.cs" />
@@ -97,7 +100,10 @@
     <Compile Include="Security\CryptoHelper.cs" />
     <Compile Include="Security\DESAlgorithmNew.cs" />
     <Compile Include="Security\DesCopy.cs" />
+    <Compile Include="Serialization\ICacheSerializer.cs" />
+    <Compile Include="Serialization\JsonCacheSerializer.cs" />
     <Compile Include="Serialization\JsonUtils.cs" />
+    <Compile Include="Serialization\ProtobufCacheSerializer.cs" />
     <Compile Include="Serialization\ProtoBufUtils.cs" />
     <Compile Include="Serialization\ProtoObject.cs" />
     <Compile Include="Timing\BaseTask.cs" />

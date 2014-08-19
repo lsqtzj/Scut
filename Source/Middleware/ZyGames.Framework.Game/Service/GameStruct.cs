@@ -103,6 +103,11 @@ namespace ZyGames.Framework.Game.Service
         protected bool IsPush = false;
 
         /// <summary>
+        /// 是否影响输出, True：不响应
+        /// </summary>
+        protected bool IsNotRespond;
+
+        /// <summary>
         /// 请求上来的消息编号，主动下发编号为0
         /// </summary>
         protected int MsgId = 0;
@@ -164,7 +169,37 @@ namespace ZyGames.Framework.Game.Service
         {
             this.actionId = aActionId;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        public void PushIntoStack(UInt64 obj)
+        {
+            dataStruct.PushIntoStack(obj);
+        }
+        /// <summary>
+        /// int类型
+        /// </summary>
+        /// <param name="obj"></param>
+        public void PushIntoStack(UInt32 obj)
+        {
+            dataStruct.PushIntoStack(obj);
+        }
+        /// <summary>
+        /// short类型
+        /// </summary>
+        /// <param name="obj"></param>
+        public void PushIntoStack(UInt16 obj)
+        {
+            dataStruct.PushIntoStack(obj);
+        }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public void PushIntoStack(long obj)
+        {
+            dataStruct.PushIntoStack(obj);
+        }
         /// <summary>
         /// int类型
         /// </summary>
@@ -178,6 +213,14 @@ namespace ZyGames.Framework.Game.Service
         /// </summary>
         /// <param name="obj"></param>
         public void PushIntoStack(short obj)
+        {
+            dataStruct.PushIntoStack(obj);
+        }
+        /// <summary>
+        /// bool类型
+        /// </summary>
+        /// <param name="obj"></param>
+        public void PushIntoStack(bool obj)
         {
             dataStruct.PushIntoStack(obj);
         }
@@ -198,6 +241,38 @@ namespace ZyGames.Framework.Game.Service
             dataStruct.PushIntoStack(obj);
         }
         /// <summary>
+        /// 
+        /// </summary>
+        public void PushIntoStack(double obj)
+        {
+            dataStruct.PushIntoStack(obj);
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        public void PushIntoStack(float obj)
+        {
+            dataStruct.PushIntoStack(obj);
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="obj"></param>
+        public void PushIntoStack(DateTime obj)
+        {
+            dataStruct.PushIntoStack(obj);
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="useGzip"></param>
+        public void PushIntoStack(object obj, bool useGzip)
+        {
+            dataStruct.PushIntoStack(obj, useGzip);
+        }
+
+        /// <summary>
         /// 将数据加到栈尾
         /// </summary>
         /// <param name="obj"></param>
@@ -211,7 +286,10 @@ namespace ZyGames.Framework.Game.Service
         /// </summary>
         public void WriteAction(BaseGameResponse response)
         {
-            dataStruct.WriteAction(response, actionId, errorCode, errorInfo, MsgId, St);
+            if (!IsNotRespond)
+            {
+                dataStruct.WriteAction(response, actionId, errorCode, errorInfo, MsgId, St);
+            }
         }
 
         /// <summary>
@@ -231,7 +309,11 @@ namespace ZyGames.Framework.Game.Service
             this.iVisitEndTime = DateTime.Now;
             WatchAction();
             this.SaveActionLogToDB(LogActionStat.Fail, logActionResult);
-            response.WriteError(actionGetter, errorCode, errorInfo);
+
+            if (!IsNotRespond)
+            {
+                response.WriteError(actionGetter, errorCode, errorInfo);
+            }
             //dataStruct.WriteAction(response, actionId, errorCode, errorInfo, MsgId, St);
         }
 
@@ -265,7 +347,10 @@ namespace ZyGames.Framework.Game.Service
         /// </summary>
         public virtual void WriteResponse(BaseGameResponse response)
         {
-            BuildPacket();
+            if (!IsNotRespond)
+            {
+                BuildPacket();
+            }
             WriteAction(response);
             WriteEnd();
         }
@@ -299,7 +384,7 @@ namespace ZyGames.Framework.Game.Service
         /// </summary>
         public virtual void BuildPacket()
         {
-            
+
         }
 
         #region //日志记录

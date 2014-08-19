@@ -28,7 +28,6 @@ using ZyGames.Framework.Common;
 using ZyGames.Framework.Common.Log;
 using ZyGames.Framework.Common.Serialization;
 using ZyGames.Framework.Data;
-using ZyGames.Framework.Event;
 using ZyGames.Framework.Model;
 using ZyGames.Framework.Net;
 using ZyGames.Framework.Redis;
@@ -42,15 +41,19 @@ namespace ZyGames.Framework.Cache.Generic.Pool
     {
         private ITransponder _dbTransponder;
         private ITransponder _redisTransponder;
+        private readonly ICacheSerializer _serializer;
+
         /// <summary>
         /// 
         /// </summary>
         /// <param name="dbTransponder"></param>
         /// <param name="redisTransponder"></param>
-        protected BaseCachePool(ITransponder dbTransponder, ITransponder redisTransponder)
+        /// <param name="serializer"></param>
+        protected BaseCachePool(ITransponder dbTransponder, ITransponder redisTransponder, ICacheSerializer serializer)
         {
             _dbTransponder = dbTransponder;
             _redisTransponder = redisTransponder;
+            _serializer = serializer;
         }
 
         internal abstract void Init();
@@ -186,7 +189,7 @@ namespace ZyGames.Framework.Cache.Generic.Pool
             dataList = null;
             //表为空时，不加载数据
             if (receiveParam.Schema == null ||
-                string.IsNullOrEmpty(receiveParam.Schema.Name) ||
+                string.IsNullOrEmpty(receiveParam.Schema.EntityName) ||
                 DbConnectionProvider.CreateDbProvider(receiveParam.Schema) == null)
             {
                 //DB is optional and can no DB configuration
@@ -248,7 +251,7 @@ namespace ZyGames.Framework.Cache.Generic.Pool
         /// <returns></returns>
         public bool TryLoadHistory<T>(string redisKey, out List<T> dataList)
         {
-            redisKey = RedisConnectionPool.GetRedisEntityKeyName(redisKey);
+            string entityNameKey = RedisConnectionPool.GetRedisEntityKeyName(redisKey);
             bool result = false;
             dataList = null;
             SchemaTable schemaTable;
@@ -263,13 +266,13 @@ namespace ZyGames.Framework.Cache.Generic.Pool
                         dataList = new List<T>();
                         return true;
                     }
-                    TransReceiveParam receiveParam = new TransReceiveParam(redisKey);
+                    TransReceiveParam receiveParam = new TransReceiveParam(entityNameKey);
                     receiveParam.Schema = schemaTable;
                     int maxCount = receiveParam.Schema.Capacity;
                     var filter = new DbDataFilter(maxCount);
                     string key = schemaTable.Keys[0];
                     filter.Condition = provider.FormatFilterParam(key);
-                    filter.Parameters.Add(key, redisKey);
+                    filter.Parameters.Add(key, entityNameKey);
                     receiveParam.DbFilter = filter;
                     receiveParam.Capacity = maxCount;
 
@@ -279,11 +282,12 @@ namespace ZyGames.Framework.Cache.Generic.Pool
                         EntityHistory history = historyList.Count > 0 ? historyList[0] : null;
                         if (history != null && history.Value != null && history.Value.Length > 0)
                         {
+                            //从DB备份中取使用protobuf
                             byte[][] bufferBytes = ProtoBufUtils.Deserialize<byte[][]>(history.Value);
                             byte[][] keys = bufferBytes.Where((b, index) => index % 2 == 0).ToArray();
                             byte[][] values = bufferBytes.Where((b, index) => index % 2 == 1).ToArray();
-                            RedisConnectionPool.Process(client => client.HMSet(redisKey, keys, values));
-                            dataList = values.Select(value => ProtoBufUtils.Deserialize<T>(value)).ToList();
+                            RedisConnectionPool.Process(client => client.HMSet(entityNameKey, keys, values));
+                            dataList = values.Select(value => (T)_serializer.Deserialize(value, typeof(T))).ToList();
                             result = true;
                         }
                         else
@@ -295,7 +299,7 @@ namespace ZyGames.Framework.Cache.Generic.Pool
                 }
                 catch (Exception ex)
                 {
-                    TraceLog.WriteError("Try load Redis's history key:{0}\r\nerror:{1}", redisKey, ex);
+                    TraceLog.WriteError("Try load Redis's history key:{0}\r\nerror:{1}", entityNameKey, ex);
                 }
             }
             else
@@ -407,6 +411,7 @@ namespace ZyGames.Framework.Cache.Generic.Pool
                 {
                     if (itemPair.Value.HasChanged || !itemPair.Value.IsPeriod)
                     {
+                        //check child object expired process.
                         itemPair.Value.RemoveExpired(itemPair.Key);
                         continue;
                     }

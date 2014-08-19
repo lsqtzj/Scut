@@ -25,7 +25,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Web;
-using System.Web.Security;
 using ZyGames.Framework.Common;
 using ZyGames.Framework.Game.Lang;
 using ZyGames.Framework.Game.Runtime;
@@ -62,6 +61,7 @@ namespace ZyGames.Framework.Game.Contract
             }
             _session = GameSession.Get(SessionId)
                 ?? GameSession.CreateNew(Guid.NewGuid(), request);
+            SessionId = _session != null ? _session.SessionId : "";
         }
 
         /// <summary>
@@ -75,6 +75,7 @@ namespace ZyGames.Framework.Game.Contract
             _session = package.Session;
             InitData(_paramString);
             SessionId = _session != null ? _session.SessionId : "";
+
         }
 
         /// <summary>
@@ -580,7 +581,7 @@ namespace ZyGames.Framework.Game.Contract
         /// <returns></returns>
         public override bool CheckSign()
         {
-            string signKey = GameEnvironment.Setting.ProductSignKey;
+            string signKey = GameEnvironment.Setting != null ? GameEnvironment.Setting.ProductSignKey : "";
             if (string.IsNullOrEmpty(signKey))
             {
                 return true;

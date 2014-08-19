@@ -27,7 +27,6 @@ using System.Collections.Generic;
 using System.Linq;
 using ProtoBuf;
 using ZyGames.Framework.Common;
-using ZyGames.Framework.Common.Locking;
 using ZyGames.Framework.Event;
 
 namespace ZyGames.Framework.Cache.Generic
@@ -80,7 +79,10 @@ namespace ZyGames.Framework.Cache.Generic
             ExpiredHandle = expiredHandle;
             _list = length > 0 ? new List<T>(length) : new List<T>();
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="changeEvent"></param>
         public override void AddChildrenListener(object changeEvent)
         {
             CheckSingleBindEvent(changeEvent);
@@ -147,6 +149,23 @@ namespace ZyGames.Framework.Cache.Generic
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="collection"></param>
+        public void AddRange(IList<T> collection)
+        {
+            lock (_syncRoot)
+            {
+                foreach (var item in collection)
+                {
+                    AddChildrenListener(item);
+                }
+                _list.AddRange(collection);
+            }
+            Notify(this, CacheItemChangeType.Add, PropertyName);
         }
 
         /// <summary>

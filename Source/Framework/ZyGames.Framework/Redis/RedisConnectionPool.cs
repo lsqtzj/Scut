@@ -31,6 +31,7 @@ using ZyGames.Framework.Common.Configuration;
 using ZyGames.Framework.Common.Log;
 using ZyGames.Framework.Common.Serialization;
 using ZyGames.Framework.Model;
+using ZyGames.Framework.Common;
 
 namespace ZyGames.Framework.Redis
 {
@@ -43,11 +44,17 @@ namespace ZyGames.Framework.Redis
         /// 
         /// </summary>
         public const string EntityKeyPreChar = "$";
+        /// <summary>
+        /// 
+        /// </summary>
+        internal const string EntityKeySplitChar = "_";
         private static PooledRedisClientManager _pooledRedis;
         private static RedisPoolSetting _defaultSetting;
+        private static ICacheSerializer _serializer;
 
         static RedisConnectionPool()
         {
+            _serializer = new ProtobufCacheSerializer();
             _defaultSetting = new RedisPoolSetting
             {
                 Host = ConfigUtils.GetSetting("Redis.Host", "localhost"),
@@ -63,16 +70,20 @@ namespace ZyGames.Framework.Redis
         /// <summary>
         /// init
         /// </summary>
-        public static void Initialize()
+        /// <param name="serializer"></param>
+        public static void Initialize(ICacheSerializer serializer)
         {
-            Initialize(_defaultSetting);
+            Initialize(_defaultSetting, serializer);
         }
+
         /// <summary>
         /// init
         /// </summary>
         /// <param name="setting">pool setting</param>
-        public static void Initialize(RedisPoolSetting setting)
+        /// <param name="serializer"></param>
+        public static void Initialize(RedisPoolSetting setting, ICacheSerializer serializer)
         {
+            _serializer = serializer;
             string[] readWriteHosts = setting.Host.Split(',');
             string[] readOnlyHosts = setting.ReadOnlyHost.Split(',');
             var redisConfig = new RedisClientManagerConfig
@@ -92,6 +103,25 @@ namespace ZyGames.Framework.Redis
                 _pooledRedis.PoolTimeout = setting.PoolTimeOut;
             }
             _pooledRedis.Start();
+        }
+
+        /// <summary>
+        /// SetNo
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static long SetNo(string key, long value)
+        {
+            using (var client = GetClient())
+            {
+                var num = client.IncrementValue(key);
+                if (value > 0 && num < value)
+                {
+                    return client.Increment(key, (value - num).ToUInt32());
+                }
+                return num;
+            }
         }
 
         /// <summary>
@@ -200,9 +230,10 @@ namespace ZyGames.Framework.Redis
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="redisKey"></param>
+        /// <param name="table"></param>
         /// <param name="list"></param>
         /// <returns></returns>
-        public static bool TryGetEntity<T>(string redisKey, out List<T> list) where T : AbstractEntity
+        public static bool TryGetEntity<T>(string redisKey, SchemaTable table, out List<T> list) where T : AbstractEntity
         {
             list = new List<T>();
             bool result = false;
@@ -220,6 +251,7 @@ namespace ZyGames.Framework.Redis
                 }
                 byte[][] valueBytes = null;
                 byte[] value = null;
+                bool isFilter = false;
                 try
                 {
                     ProcessReadOnly(client =>
@@ -228,21 +260,23 @@ namespace ZyGames.Framework.Redis
                         {
                             if (client.ContainsKey(hashId))
                             {
-                                valueBytes = client.HGetAll(hashId).Where((b, index) => index % 2 == 1).ToArray();
+                                valueBytes = client.HVals(hashId);//.Where((b, index) => index % 2 == 1).ToArray();
                             }
                         }
                         else
                         {
                             value = client.HGet(hashId, keyCode);
-                            //修正Persional结构当多个Key时，以PersionalId加载不了数据问题
-                            if (value == null
+                            //修正未使用Persional作为Key,而是多个Key时,加载数据为空问题,修改成加载所有
+                            if (value == null && table != null
                                 && !string.IsNullOrEmpty(keyValue)
-                                && typeof(T).IsSubclassOf(typeof(BaseEntity)))
+                                && typeof(T).IsSubclassOf(typeof(BaseEntity))
+                                && table.Keys.Length > 1)
                             {
-                                var resultKeys = client.HKeys(hashId).Where(k => ToStringKey(k).IndexOf(keyValue, StringComparison.Ordinal) != -1).ToArray();
+                                isFilter = true;
+                                byte[][] resultKeys = client.HKeys(hashId).Where(k => ContainKey(k, keyCode, AbstractEntity.KeyCodeJoinChar)).ToArray();
                                 if (resultKeys.Length > 0)
                                 {
-                                    valueBytes = client.HMGet(hashId, resultKeys);
+                                    valueBytes = client.HMGet(hashId, resultKeys);//.Where((b, index) => index % 2 == 1).ToArray();
                                 }
                             }
                         }
@@ -252,12 +286,19 @@ namespace ZyGames.Framework.Redis
                     {
                         if (value != null)
                         {
-                            list = new List<T> { ProtoBufUtils.Deserialize<T>(value) };
+                            list = new List<T> { (T)_serializer.Deserialize(value, typeof(T)) };
                             return true;
                         }
                         if (valueBytes != null)
                         {
-                            list = valueBytes.Select(b => ProtoBufUtils.Deserialize<T>(b)).ToList();
+                            if (isFilter)
+                            {
+                                list = valueBytes.Select(t => (T)_serializer.Deserialize(t, typeof(T))).Where(t => t.PersonalId == keyValue).ToList();
+                            }
+                            else
+                            {
+                                list = valueBytes.Select(t => (T)_serializer.Deserialize(t, typeof(T))).ToList();
+                            }
                             return true;
                         }
                     }
@@ -288,7 +329,7 @@ namespace ZyGames.Framework.Redis
                         byte[][] keyCodes = new byte[buffers.Length][];
                         for (int i = 0; i < buffers.Length; i++)
                         {
-                            T entity = ProtoBufUtils.Deserialize<T>(buffers[i]);
+                            T entity = (T)_serializer.Deserialize(buffers[i], typeof(T));
                             keyCodes[i] = ToByteKey(entity.GetKeyCode());
                             list.Add(entity);
                         }
@@ -312,7 +353,7 @@ namespace ZyGames.Framework.Redis
 
                         try
                         {
-                            var dataSet = ProtoBufUtils.Deserialize<Dictionary<string, T>>(buffers);
+                            var dataSet = (Dictionary<string, T>)_serializer.Deserialize(buffers, typeof(Dictionary<string, T>));
                             if (dataSet != null)
                             {
                                 list = dataSet.Values.ToList();
@@ -322,22 +363,25 @@ namespace ZyGames.Framework.Redis
                         {
                             //try get entity type data
                             list = new List<T>();
-                            T temp = ProtoBufUtils.Deserialize<T>(buffers);
+                            T temp = (T)_serializer.Deserialize(buffers, typeof(T));
                             list.Add(temp);
                         }
                         //转移到新格式
-                        byte[][] keyCodes = new byte[list.Count][];
-                        byte[][] values = new byte[list.Count][];
-                        for (int i = 0; i < list.Count; i++)
+                        if (list != null)
                         {
-                            T entity = list[i];
-                            keyCodes[i] = ToByteKey(entity.GetKeyCode());
-                            values[i] = ProtoBufUtils.Serialize(entity);
-                        }
-                        if (keyCodes.Length > 0)
-                        {
-                            UpdateEntity(typeof(T).FullName, keyCodes, values);
-                            Process(client => client.Remove(redisKey));
+                            byte[][] keyCodes = new byte[list.Count][];
+                            byte[][] values = new byte[list.Count][];
+                            for (int i = 0; i < list.Count; i++)
+                            {
+                                T entity = list[i];
+                                keyCodes[i] = ToByteKey(entity.GetKeyCode());
+                                values[i] = _serializer.Serialize(entity);
+                            }
+                            if (keyCodes.Length > 0)
+                            {
+                                UpdateEntity(typeof(T).FullName, keyCodes, values);
+                                Process(client => client.Remove(redisKey));
+                            }
                         }
                     }
                     result = true;
@@ -354,6 +398,14 @@ namespace ZyGames.Framework.Redis
                 TraceLog.WriteError("Get redis \"{0}\" key:\"{1}\" cache error:{2}", typeof(T).FullName, redisKey, ex);
             }
             return result;
+        }
+
+        private static bool ContainKey(byte[] bytes, byte[] pattern, char pre)
+        {
+            byte[] arr = MathUtils.CharToByte(pre);
+            bytes = MathUtils.Join(arr, bytes);
+            pattern = MathUtils.Join(arr, pattern);
+            return MathUtils.IndexOf(bytes, pattern) > -1;
         }
 
 
@@ -380,7 +432,7 @@ namespace ZyGames.Framework.Redis
                         AbstractEntity entity = enm.Current;
                         string keyCode = entity.GetKeyCode();
                         var keybytes = ToByteKey(keyCode);
-                        redisKey += "_" + keyCode;
+                        redisKey += EntityKeySplitChar + keyCode;
                         if (entity.IsDelete)
                         {
                             removeKeys.Add(keybytes);
@@ -388,7 +440,7 @@ namespace ZyGames.Framework.Redis
                         }
                         entity.Reset();
                         keys.Add(keybytes);
-                        values.Add(ProtoBufUtils.Serialize(entity));
+                        values.Add(_serializer.Serialize(entity));
                     }
                     UpdateEntity(typeName, keys.ToArray(), values.ToArray(), removeKeys.ToArray());
                     return true;
@@ -432,10 +484,16 @@ namespace ZyGames.Framework.Redis
         /// <returns></returns>
         public static string GetRedisEntityKeyName(string typeName)
         {
+            typeName = GetRootKey(typeName);
             string hashId = typeName.StartsWith(EntityKeyPreChar)
                 ? typeName
                 : EntityKeyPreChar + typeName;
             return hashId;
+        }
+
+        internal static string GetRootKey(string redisKey)
+        {
+            return redisKey.Split('_')[0];
         }
 
         internal static byte[] ToByteKey(string key)
@@ -445,6 +503,25 @@ namespace ZyGames.Framework.Redis
         internal static string ToStringKey(byte[] keyBytes)
         {
             return Encoding.UTF8.GetString(keyBytes);
+        }
+
+        /// <summary>
+        /// 从TypeName转成成Redis的Key
+        /// </summary>
+        /// <param name="typeName"></param>
+        /// <returns></returns>
+        internal static string EncodeTypeName(string typeName)
+        {
+            return typeName.Replace(EntityKeySplitChar, "%11");
+        }
+        /// <summary>
+        /// 从Redis的Key转成成TypeName
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        internal static string DecodeTypeName(string key)
+        {
+            return key.TrimStart(EntityKeyPreChar.ToCharArray()).Replace("%11", EntityKeySplitChar);
         }
     }
 }

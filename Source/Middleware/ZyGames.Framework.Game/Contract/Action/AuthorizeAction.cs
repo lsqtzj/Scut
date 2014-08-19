@@ -21,13 +21,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using ZyGames.Framework.Common;
+
 using ZyGames.Framework.Common.Log;
-using ZyGames.Framework.Game.Com;
 using ZyGames.Framework.Game.Com.Generic;
 using ZyGames.Framework.Game.Context;
 using ZyGames.Framework.Game.Lang;
@@ -77,8 +72,8 @@ namespace ZyGames.Framework.Game.Contract.Action
             {
                 return true;
             }
-            BaseUser gameUser;
-            LoginStatus status = CheckUser(Sid, UserId, out gameUser);
+            IUser user;
+            LoginStatus status = CheckUser(out user);
 
             if (IsRunLoader)
             {
@@ -97,16 +92,12 @@ namespace ZyGames.Framework.Game.Contract.Action
                     result = false;
                     break;
                 case LoginStatus.Success:
-                    if (Current != null)
-                    {
-                        Current.User = gameUser;
-                    }
                     result = true;
                     break;
                 default:
                     break;
             }
-            if (gameUser != null && gameUser.IsFengJinStatus)
+            if (user != null && user.IsLock)
             {
                 ErrorCode = Language.Instance.TimeoutCode;
                 ErrorInfo = Language.Instance.AcountIsLocked;
@@ -114,7 +105,7 @@ namespace ZyGames.Framework.Game.Contract.Action
             }
             if (result && IsRefresh)
             {
-                DoRefresh(actionId, gameUser);
+                DoRefresh(actionId, user);
             }
             return result;
         }
@@ -129,38 +120,22 @@ namespace ZyGames.Framework.Game.Contract.Action
         /// <summary>
         /// 不检查的ActionID
         /// </summary>
-        protected abstract bool IgnoreActionId
+        protected virtual bool IgnoreActionId
         {
-            get;
+            get { return false; }
         }
+
         /// <summary>
         /// Checks the user.
         /// </summary>
         /// <returns>The user.</returns>
-        /// <param name="sessionId">Session I.</param>
-        /// <param name="userId">User identifier.</param>
         /// <param name="gameUser">Game user.</param>
-        protected LoginStatus CheckUser(string sessionId, int userId, out BaseUser gameUser)
+        protected LoginStatus CheckUser(out IUser gameUser)
         {
             gameUser = null;
-            if (UserFactory != null)
+            if (Current != null)
             {
-                gameUser = UserFactory(userId);
-                if (gameUser != null)
-                {
-                    var session = GameSession.Get(userId);
-                    if (session != null)
-                    {
-                        return session.SessionId == sessionId ? LoginStatus.Success : LoginStatus.Logined;
-                    }
-
-                    //todo session
-                    session = GameSession.Get(sessionId);
-                    TraceLog.ReleaseWriteDebug("User no login, Sid:{0},Uid:{1},session info:{2}", sessionId, userId,
-                        session == null ? "is empty" :
-                        string.Format("bind uid:{0}", session.UserId)
-                        );
-                }
+                return Current.IsAuthorized ? LoginStatus.Success : LoginStatus.Logined;
             }
             return LoginStatus.NoLogin;
         }
@@ -169,7 +144,7 @@ namespace ZyGames.Framework.Game.Contract.Action
         /// </summary>
         /// <param name="actionId">Action identifier.</param>
         /// <param name="gameUser">Game user.</param>
-        protected void DoRefresh(int actionId, BaseUser gameUser)
+        protected void DoRefresh(int actionId, IUser gameUser)
         {
             if (EnablePayNotify != null)
             {

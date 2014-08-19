@@ -70,18 +70,16 @@ namespace ZyGames.Framework.Game.Contract
         /// <summary>
         /// 请求处理
         /// </summary>
-        /// <param name="userFactory"></param>
-        public static void Request(Func<int, BaseUser> userFactory)
+        public static void Request()
         {
-            Request(GameEnvironment.Setting.ActionTypeName, userFactory);
+            Request(GameEnvironment.Setting.ActionTypeName);
         }
 
         /// <summary>
         /// 请求处理
         /// </summary>
         /// <param name="typeName"></param>
-        /// <param name="userFactory"></param>
-        public static void Request(string typeName, Func<int, BaseUser> userFactory)
+        public static void Request(string typeName)
         {
             if (HttpContext.Current == null)
             {
@@ -89,7 +87,7 @@ namespace ZyGames.Framework.Game.Contract
             }
             HttpGet httpGet = new HttpGet(HttpContext.Current.Request);
             HttpGameResponse response = new HttpGameResponse(HttpContext.Current.Response);
-            Request(typeName, httpGet, response, userFactory);
+            Request(typeName, httpGet, response);
         }
 
         /// <summary>
@@ -97,10 +95,9 @@ namespace ZyGames.Framework.Game.Contract
         /// </summary>
         /// <param name="actionGetter"></param>
         /// <param name="response"></param>
-        /// <param name="userFactory"></param>
-        public static void Request(ActionGetter actionGetter, BaseGameResponse response, Func<int, BaseUser> userFactory)
+        public static void Request(ActionGetter actionGetter, BaseGameResponse response)
         {
-            Request(GameEnvironment.Setting.ActionTypeName, actionGetter, response, userFactory);
+            Request(GameEnvironment.Setting.ActionTypeName, actionGetter, response);
         }
 
         /// <summary>
@@ -108,9 +105,8 @@ namespace ZyGames.Framework.Game.Contract
         /// </summary>
         /// <param name="typeName"></param>
         /// <param name="response"></param>
-        /// <param name="userFactory"></param>
         /// <param name="actionGetter"></param>
-        public static void Request(string typeName, ActionGetter actionGetter, BaseGameResponse response, Func<int, BaseUser> userFactory)
+        public static void Request(string typeName, ActionGetter actionGetter, BaseGameResponse response)
         {
             var actionId = actionGetter.GetActionId().ToInt();
             string tempName = string.Format(typeName, actionId);
@@ -121,7 +117,7 @@ namespace ZyGames.Framework.Game.Contract
                 if (isRL || actionGetter.CheckSign())
                 {
                     BaseStruct action = FindRoute(typeName, actionGetter, actionId);
-                    Process(action, actionGetter, response, userFactory);
+                    Process(action, actionGetter, response);
                     if (action != null)
                     {
                         return;
@@ -144,12 +140,11 @@ namespace ZyGames.Framework.Game.Contract
         /// <summary>
         /// 请求脚本处理
         /// </summary>
-        /// <param name="userFactory">创建user对象工厂</param>
-        public static void RequestScript(Func<int, BaseUser> userFactory = null)
+        public static void RequestScript()
         {
             HttpGet httpGet = new HttpGet(HttpContext.Current.Request);
             BaseGameResponse response = new HttpGameResponse(HttpContext.Current.Response);
-            RequestScript(httpGet, response, userFactory);
+            RequestScript(httpGet, response);
         }
 
         /// <summary>
@@ -157,8 +152,7 @@ namespace ZyGames.Framework.Game.Contract
         /// </summary>
         /// <param name="actionGetter">请求参数对象</param>
         /// <param name="response">字节输出处理</param>
-        /// <param name="userFactory">创建user对象工厂,可为Null</param>
-        public static void RequestScript(ActionGetter actionGetter, BaseGameResponse response, Func<int, BaseUser> userFactory)
+        public static void RequestScript(ActionGetter actionGetter, BaseGameResponse response)
         {
             int actionId = actionGetter.GetActionId();
             string errorInfo = "";
@@ -170,7 +164,7 @@ namespace ZyGames.Framework.Game.Contract
                     BaseStruct baseStruct = FindScriptRoute(actionGetter, actionId);
                     if (baseStruct != null)
                     {
-                        Process(baseStruct, actionGetter, response, userFactory);
+                        Process(baseStruct, actionGetter, response);
                         return;
                     }
                 }
@@ -197,7 +191,7 @@ namespace ZyGames.Framework.Game.Contract
         /// <param name="urlParam"></param>
         /// <param name="actionGetter"></param>
         /// <returns></returns>
-        public static byte[] GetActionResponse(IActionDispatcher actionDispatcher, int actionId, BaseUser baseUser, string urlParam, out ActionGetter actionGetter)
+        public static byte[] GetActionResponse(IActionDispatcher actionDispatcher, int actionId, IUser baseUser, string urlParam, out ActionGetter actionGetter)
         {
             int userId = baseUser != null ? baseUser.GetUserId() : 0;
             GameSession session = GameSession.Get(userId);
@@ -212,8 +206,7 @@ namespace ZyGames.Framework.Game.Contract
             RequestPackage requestPackage = new RequestPackage(0, sessionId, actionId, userId);
             requestPackage.UrlParam = param;
             requestPackage.IsUrlParam = true;
-            requestPackage.Session = session;
-            requestPackage.ReceiveTime = DateTime.Now;
+            requestPackage.Bind(session);
             actionGetter = new HttpGet(requestPackage);
             return GetActionResponse(actionDispatcher, actionId, baseUser, actionGetter);
         }
@@ -222,17 +215,16 @@ namespace ZyGames.Framework.Game.Contract
         /// 获取Action处理的输出字节流
         /// </summary>
         /// <returns></returns>
-        public static byte[] GetActionResponse(IActionDispatcher actionDispatcher, int actionId, BaseUser baseUser, ActionGetter actionGetter)
+        public static byte[] GetActionResponse(IActionDispatcher actionDispatcher, int actionId, IUser baseUser, ActionGetter actionGetter)
         {
             BaseStruct baseStruct = FindRoute(GameEnvironment.Setting.ActionTypeName, actionGetter, actionId);
             SocketGameResponse response = new SocketGameResponse();
             response.WriteErrorCallback += actionDispatcher.ResponseError;
-            baseStruct.UserFactory = uid => { return baseUser; };
             baseStruct.SetPush();
             baseStruct.DoInit();
             using (ILocking locking = baseStruct.RequestLock())
             {
-                if (locking.IsLocked)
+                if (locking == null || locking.IsLocked)
                 {
                     if (!baseStruct.GetError() &&
                         baseStruct.ReadUrlElement() &&
@@ -256,14 +248,12 @@ namespace ZyGames.Framework.Game.Contract
         /// <param name="baseStruct"></param>
         /// <param name="actionGetter"></param>
         /// <param name="response"></param>
-        /// <param name="userFactory"></param>
-        public static void Process(BaseStruct baseStruct, ActionGetter actionGetter, BaseGameResponse response, Func<int, BaseUser> userFactory)
+        public static void Process(BaseStruct baseStruct, ActionGetter actionGetter, BaseGameResponse response)
         {
-            baseStruct.UserFactory = userFactory;
             baseStruct.DoInit();
             using (ILocking locking = baseStruct.RequestLock())
             {
-                if (locking.IsLocked)
+                if (locking == null || locking.IsLocked)
                 {
                     if (!baseStruct.GetError() &&
                         baseStruct.ReadUrlElement() &&
@@ -289,7 +279,7 @@ namespace ZyGames.Framework.Game.Contract
         /// <param name="userList">指定范围的玩家</param>
         /// <param name="parameters">请求参数</param>
         /// <param name="successHandle">成功回调</param>
-        public static void BroadcastAction<T>(int actionId, List<T> userList, Parameters parameters, Action<T> successHandle) where T : BaseUser
+        public static void BroadcastAction<T>(int actionId, List<T> userList, Parameters parameters, Action<T> successHandle) where T : IUser
         {
             StringBuilder shareParam = new StringBuilder();
             if (parameters != null)
@@ -299,12 +289,12 @@ namespace ZyGames.Framework.Game.Contract
                     shareParam.AppendFormat("&{0}={1}", parameter.Key, parameter.Value);
                 }
             }
-            IActionDispatcher actionDispatcher = new ActionDispatcher();
+            IActionDispatcher actionDispatcher = new ScutActionDispatcher();
             ActionGetter actionParam;
             byte[] sendData = GetActionResponse(actionDispatcher, actionId, null, shareParam.ToString(), out actionParam);
-            foreach (var user in userList)
+            foreach (T user in userList)
             {
-                if (user == default(T))
+                if (object.Equals(user, null))
                 {
                     continue;
                 }
@@ -321,7 +311,7 @@ namespace ZyGames.Framework.Game.Contract
                 }
                 catch (Exception ex)
                 {
-                    TraceLog.WriteError("BroadcastAction  action:{0} userId:{1} error:{2}", actionId, user.PersonalId, ex);
+                    TraceLog.WriteError("BroadcastAction  action:{0} userId:{1} error:{2}", actionId, user.GetUserId(), ex);
                 }
             }
         }
@@ -334,7 +324,7 @@ namespace ZyGames.Framework.Game.Contract
         /// <param name="actionId">指定的Action</param>
         /// <param name="parameters">请求参数</param>
         /// <param name="successHandle">成功回调</param>
-        public static void SendAsyncAction<T>(List<T> userList, int actionId, Parameters parameters, Action<ActionGetter> successHandle) where T : BaseUser
+        public static void SendAsyncAction<T>(List<T> userList, int actionId, Parameters parameters, Action<ActionGetter> successHandle) where T : IUser
         {
             StringBuilder shareParam = new StringBuilder();
             if (parameters != null)
@@ -344,10 +334,10 @@ namespace ZyGames.Framework.Game.Contract
                     shareParam.AppendFormat("&{0}={1}", parameter.Key, parameter.Value);
                 }
             }
-            IActionDispatcher actionDispatcher = new ActionDispatcher();
+            IActionDispatcher actionDispatcher = new ScutActionDispatcher();
             foreach (var user in userList)
             {
-                if (user == default(T))
+                if (object.Equals(user, null))
                 {
                     continue;
                 }
@@ -365,7 +355,7 @@ namespace ZyGames.Framework.Game.Contract
                 }
                 catch (Exception ex)
                 {
-                    TraceLog.WriteError("SendToClient action:{0} userId:{1} error:{2}", actionId, user.PersonalId, ex);
+                    TraceLog.WriteError("SendToClient action:{0} userId:{1} error:{2}", actionId, user.GetUserId(), ex);
                 }
             }
         }

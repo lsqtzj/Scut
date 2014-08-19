@@ -6,34 +6,33 @@ using ZyGames.Framework.Common.Serialization;
 public class Action1001 : BaseAction//GameAction
 {
     private Response1001Pack _responseData;
-    private bool isCustom = true;//todo 启用自定的结构
+    private bool isCustom;
 
     public Action1001()
         : base((int)ActionType.RankSelect)
     {
     }
 
-    protected override void SendParameter(NetWriter writer, object userData)
+    protected override void SendParameter(NetWriter writer, ActionParam actionParam)
     {
-        if (isCustom)
+        if (actionParam.HasValue)
         {
             //自定对象参数格式
-            Request1001Pack requestPack = new Request1001Pack()
-            {
-                PageIndex = 1,
-                PageSize = 10
-            };
+            isCustom = true;
+            Request1001Pack requestPack = actionParam.GetValue<Request1001Pack>();
             byte[] data = ProtoBufUtils.Serialize(requestPack);
             writer.SetBodyData(data);
         }
         else
         {
+            isCustom = false;
             //默认url参数格式
-            writer.writeInt32("PageIndex", 1);
-            writer.writeInt32("PageSize", 10);
+            actionParam.Foreach((k, v) =>
+            {
+                writer.writeString(k, v.ToString());
+                return true;
+            });
         }
-
-
     }
 
     protected override void DecodePackage(NetReader reader)
@@ -65,11 +64,12 @@ public class Action1001 : BaseAction//GameAction
         }
     }
 
-    protected override void Process(object userData)
+    public override ActionResult GetResponseData()
     {
         if (_responseData != null)
         {
-            UnityEngine.Debug.Log(string.Format("The action{0} receive ok, record count:{1}", ActionId, _responseData.PageCount));
+            UnityEngine.Debug.Log(string.Format("The action{0} receive ok, record count:{1}", ActionId, _responseData.Items == null ? 0 : _responseData.Items.Count));
         }
+        return new ActionResult(_responseData);
     }
 }

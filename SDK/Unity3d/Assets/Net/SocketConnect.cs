@@ -2,7 +2,21 @@
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Threading;
+using UnityEngine;
 
+
+enum ErrorCode
+{
+    Success = 0,
+    ConnectError = -1,
+    TimeOutError = -2,
+}
+
+/// <summary>
+/// 
+/// </summary>
+/// <param name="package"></param>
+public delegate void NetPushCallback(SocketPackage package);
 /// <summary>
 /// 
 /// </summary>
@@ -21,12 +35,24 @@ public class SocketConnect
     private readonly Queue<SocketPackage> _receiveQueue;
     private const int TimeOut = 30;//30秒的超时时间
     private Thread _thread = null;
+    private const int HearInterval = 10000;
+    private Timer _heartbeatThread = null;
 
-    enum ErrorCode
+    /// <summary>
+    /// 注册网络Push回调方法
+    /// </summary>
+    public event NetPushCallback PushCallback;
+
+    protected virtual void OnPushCallback(SocketPackage package)
     {
-        Success = 0,
-        ConnectError = -1,
-        TimeOutError = -2,
+        try
+        {
+            NetPushCallback handler = PushCallback;
+            if (handler != null) handler.BeginInvoke(package, null, null);
+        }
+        catch (Exception)
+        {
+        }
     }
 
     public SocketConnect(string host, int port, IHeadFormater formater)
@@ -87,7 +113,7 @@ public class SocketConnect
                 {
                     if (_socket.Available == 0)
                     {
-                        UnityEngine.Debug.Log("Close Socket");
+                        Debug.Log("Close Socket");
                         Close();
                         break;
                     }
@@ -116,30 +142,43 @@ public class SocketConnect
                         reader.pushNetStream(data, NetworkType.Socket);
                         SocketPackage findPackage = null;
 
-                        //UnityEngine.Debug.Log("Socket receive ok, revLen:" + recnum + ", actionId:" + reader.ActionId + ", msgId:" + reader.RmId + ", packLen:" + reader.Buffer.Length);
+                        //Debug.Log("Socket receive ok, revLen:" + recnum 
+                        //    + ", actionId:" + reader.ActionId
+                        //    + ", msgId:" + reader.RmId
+                        //    + ", error:" + reader.StatusCode + reader.Description 
+                        //    + ", packLen:" + reader.Buffer.Length);
                         lock (_sendList)
                         {
+                            //find pack in send queue.
                             foreach (SocketPackage package in _sendList)
                             {
                                 if (package.MsgId == reader.RmId)
                                 {
                                     package.Reader = reader;
-                                    package.ErrorCode = (int)ErrorCode.Success;
-                                    package.ErrorMsg = "success";
+                                    package.ErrorCode = reader.StatusCode;
+                                    package.ErrorMsg = reader.Description;
                                     findPackage = package;
                                     break;
                                 }
 
                             }
                         }
-                        foreach (SocketPackage package in ActionPools)
+                        if (findPackage == null)
                         {
-                            if (package.ActionId == reader.ActionId)
+                            lock (_receiveQueue)
                             {
-                                package.Reader = reader;
-                                package.ErrorCode = (int)ErrorCode.Success;
-                                package.ErrorMsg = "success";
-                                findPackage = package;
+                                //find pack in receive queue.
+                                foreach (SocketPackage package in ActionPools)
+                                {
+                                    if (package.ActionId == reader.ActionId)
+                                    {
+                                        package.Reader = reader;
+                                        package.ErrorCode = reader.StatusCode;
+                                        package.ErrorMsg = reader.Description;
+                                        findPackage = package;
+                                        break;
+                                    }
+                                }
                             }
                         }
                         if (findPackage != null)
@@ -152,6 +191,17 @@ public class SocketConnect
                             {
                                 _sendList.Remove(findPackage);
                             }
+                        }
+                        else
+                        {
+                            //server push pack.
+                            SocketPackage package = new SocketPackage();
+                            package.MsgId = reader.RmId;
+                            package.ActionId = reader.ActionId;
+                            package.ErrorCode = reader.StatusCode;
+                            package.ErrorMsg = reader.Description;
+                            package.Reader = reader;
+                            OnPushCallback(package);
                         }
 
                     }
@@ -217,10 +267,33 @@ public class SocketConnect
                 _socket = null;
                 throw;
             }
+            if (_heartbeatThread == null)
+            {
+                _heartbeatThread = new Timer(SendHeartbeatPackage, null, HearInterval, HearInterval);
+            }
             _thread = new Thread(new ThreadStart(CheckReceive));
             _thread.Start();
         }
 
+    }
+
+    private void SendHeartbeatPackage(object state)
+    {
+        try
+        {
+            NetWriter writer = NetWriter.Instance;
+            writer.writeInt32("actionId", 1);
+            byte[] data = writer.PostData();
+            NetWriter.resetData();
+            if (!PostSend(data))
+            {
+                Debug.Log("send heartbeat paketage fail");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogException(ex);
+        }
     }
 
     private void EnsureConnected()
@@ -264,19 +337,17 @@ public class SocketConnect
             bool success = asyncSend.AsyncWaitHandle.WaitOne(5000, true);
             if (!success)
             {
-                UnityEngine.Debug.Log("asyncSend error close socket");
+                Debug.Log("asyncSend error close socket");
                 Close();
                 return false;
             }
-
+            return true;
         }
-        return true;
+        return false;
 
     }
     private void sendCallback(IAsyncResult asyncSend)
     {
-
-
     }
     public void Send(byte[] data, SocketPackage package)
     {
@@ -291,7 +362,7 @@ public class SocketConnect
 
         try
         {
-            bool bRet = PostSend(data);
+            PostSend(data);
             //UnityEngine.Debug.Log("Socket send actionId:" + package.ActionId + ", msgId:" + package.MsgId + ", send result:" + bRet);
         }
         catch (Exception ex)

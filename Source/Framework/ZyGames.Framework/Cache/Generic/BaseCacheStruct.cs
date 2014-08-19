@@ -27,7 +27,6 @@ using System.Linq;
 using ZyGames.Framework.Collection.Generic;
 using ZyGames.Framework.Common;
 using ZyGames.Framework.Common.Log;
-using ZyGames.Framework.Data;
 using ZyGames.Framework.Model;
 using ZyGames.Framework.Net;
 using ZyGames.Framework.Redis;
@@ -40,10 +39,21 @@ namespace ZyGames.Framework.Cache.Generic
     /// <typeparam name="T">AbstractEntity类型</typeparam>
     public abstract class BaseCacheStruct<T> : BaseDisposable where T : AbstractEntity, new()
     {
+        private const string PrimaryKeyFormat = "EntityPrimaryKey_{0}";
         static BaseCacheStruct()
         {
-            EntitySchemaSet.InitSchema(typeof(T));
-            CacheFactory.RegistUpdateNotify(new DefaultCacheStruct<T>());
+            try
+            {
+                var schema = EntitySchemaSet.InitSchema(typeof(T));
+                if (schema.IncreaseStartNo > 0)
+                {
+                    string key = string.Format(PrimaryKeyFormat, schema.EntityName);
+                    RedisConnectionPool.SetNo(key, schema.IncreaseStartNo);
+                }
+                CacheFactory.RegistUpdateNotify(new DefaultCacheStruct<T>());
+            }
+            catch (Exception)
+            { }
         }
         /// <summary>
         /// 
@@ -80,7 +90,7 @@ namespace ZyGames.Framework.Cache.Generic
         /// <returns></returns>
         public long GetNextNo()
         {
-            string key = "EntityPrimaryKey_" + typeof(T).Name;
+            string key = string.Format(PrimaryKeyFormat, typeof(T).Name);
             return RedisConnectionPool.GetNextNo(key);
         }
 
@@ -102,6 +112,14 @@ namespace ZyGames.Framework.Cache.Generic
         }
 
         /// <summary>
+        /// Get ItemSet array
+        /// </summary>
+        public CacheItemSet[] ChildrenItem
+        {
+            get { return DataContainer.ChildrenItem; }
+        }
+
+        /// <summary>
         /// 数据是否改变
         /// </summary>
         /// <param name="key">实体Key或personerId</param>
@@ -109,13 +127,6 @@ namespace ZyGames.Framework.Cache.Generic
         protected bool HasChangeCache(string key)
         {
             return DataContainer.HasChange(key);
-        }
-        /// <summary>
-        /// 容器数量
-        /// </summary>
-        public int Count
-        {
-            get { return DataContainer.Count; }
         }
 
         /// <summary>
@@ -337,6 +348,28 @@ namespace ZyGames.Framework.Cache.Generic
             itemSet.OnLoadError();
             TraceLog.WriteError("Try load cache data:{0} error.", typeof(T).FullName);
             return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="receiveParam"></param>
+        /// <param name="match"></param>
+        protected void LoadFrom(TransReceiveParam receiveParam, Predicate<T> match)
+        {
+            List<T> dataList = DataContainer.LoadFrom<T>(receiveParam);
+            if (DataContainer.LoadStatus == LoadingStatus.Success && dataList != null)
+            {
+                int periodTime = receiveParam.Schema.PeriodTime;
+                var tempList = match == null ? dataList : dataList.FindAll(match);
+                var pairs = tempList.GroupBy(t => t.PersonalId).ToList();
+                foreach (var pair in pairs)
+                {
+                    CacheItemSet itemSet = InitContainer(pair.Key, periodTime);
+                    InitCache(pair.ToList(), periodTime);
+                    itemSet.OnLoadSuccess();
+                }
+            }
         }
 
         /// <summary>

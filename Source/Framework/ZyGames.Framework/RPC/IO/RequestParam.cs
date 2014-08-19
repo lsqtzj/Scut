@@ -34,6 +34,11 @@ namespace ZyGames.Framework.RPC.IO
     /// </summary>
     public class RequestParam
     {
+        /// <summary>
+        /// Get or set signKey
+        /// </summary>
+        public static string SignKey { get; set; }
+
         class myCultureComparer : IEqualityComparer
         {
             public CaseInsensitiveComparer myComparer;
@@ -57,34 +62,39 @@ namespace ZyGames.Framework.RPC.IO
         private Hashtable _params;
         private string _content;
         private Encoding _encoding;
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ZyGames.Framework.RPC.IO.RequestParam"/> class.
-		/// </summary>
+        /// <summary>
+        /// sign param name
+        /// </summary>
+        protected string signName = "sign";
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ZyGames.Framework.RPC.IO.RequestParam"/> class.
+        /// </summary>
         public RequestParam()
         {
             _params = new Hashtable(3, (float).8, new myCultureComparer());
             _encoding = Encoding.UTF8;
         }
-		/// <summary>
-		/// Gets the content.
-		/// </summary>
-		/// <value>The content.</value>
+        /// <summary>
+        /// Gets the content.
+        /// </summary>
+        /// <value>The content.</value>
         public string Content
         {
             get { return _content; }
         }
-		/// <summary>
-		/// Gets the count.
-		/// </summary>
-		/// <value>The count.</value>
+        /// <summary>
+        /// Gets the count.
+        /// </summary>
+        /// <value>The count.</value>
         public int Count
         {
             get { return _params.Count; }
         }
-		/// <summary>
-		/// Sets the chat set.
-		/// </summary>
-		/// <param name="encoding">Encoding.</param>
+        /// <summary>
+        /// Sets the chat set.
+        /// </summary>
+        /// <param name="encoding">Encoding.</param>
         public void SetChatSet(Encoding encoding)
         {
             _encoding = encoding;
@@ -94,17 +104,34 @@ namespace ZyGames.Framework.RPC.IO
         /// 
         /// </summary>
         /// <param name="name"></param>
+        /// <returns></returns>
+        public object this[string name]
+        {
+            get
+            {
+                return _params.ContainsKey(name) ? _params[name] : null;
+            }
+            set
+            {
+                if (_params.ContainsKey(name))
+                {
+                    _params[name] = value;
+                }
+                else
+                {
+                    _params.Add(name, value);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="name"></param>
         /// <param name="value"></param>
         public void Add(string name, object value)
         {
-            if (_params.ContainsKey(name))
-            {
-                _params[name] = value;
-            }
-            else
-            {
-                _params.Add(name, value);
-            }
+            this[name] = value;
         }
         /// <summary>
         /// 
@@ -137,7 +164,7 @@ namespace ZyGames.Framework.RPC.IO
         /// <returns></returns>
         public object Get(string name)
         {
-            return _params.ContainsKey(name) ? _params[name] : null;
+            return this[name];
         }
 
         /// <summary>
@@ -190,8 +217,8 @@ namespace ZyGames.Framework.RPC.IO
             string sign = "";
             foreach (string key in keys)
             {
-                string value = (string)_params[key];
-                if ("sign".CompareTo(key) != 0)
+                string value = GetString(key);
+                if (!String.Equals(signName, key, StringComparison.OrdinalIgnoreCase))
                 {
                     sb.Append(key + "=" + value + "&");
                 }
@@ -211,17 +238,21 @@ namespace ZyGames.Framework.RPC.IO
         public string ToPostString()
         {
             StringBuilder sb = new StringBuilder();
-            foreach (DictionaryEntry param in _params)
+            ArrayList keys = new ArrayList(_params.Keys);
+            keys.Sort();
+            foreach (string key in keys)
             {
-                string value = param.Value.ToString();
+                string value = GetString(key);
                 if (FilterSignValue(value)
-                       && "sign".CompareTo(param.Key) != 0)
+                       && !String.Equals(signName, key, StringComparison.OrdinalIgnoreCase))
                 {
-                    sb.AppendFormat("{0}={1}&", param.Key, HttpUtility.UrlEncode(value, _encoding));
+                    sb.AppendFormat("{0}={1}&", key, HttpUtility.UrlEncode(value, _encoding));
                 }
             }
-            sb.AppendFormat("sign={0}", CreateSign());
-            return sb.ToString();
+            string paramStr = sb.ToString().TrimEnd('&');
+            string sign = EncryptSign(paramStr);
+            paramStr += string.Format("&{0}={1}", signName, sign);
+            return paramStr;
         }
 
         /// <summary>
@@ -234,25 +265,6 @@ namespace ZyGames.Framework.RPC.IO
             return true;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        protected string CreateSign()
-        {
-            StringBuilder sb = new StringBuilder();
-            ArrayList keys = new ArrayList(_params.Keys);
-            keys.Sort();
-            foreach (string key in keys)
-            {
-                string value = (string)_params[key];
-                if (FilterSignValue(value)
-                    && "sign".CompareTo(key) != 0)
-                {
-                    sb.Append(key + "=" + value + "&");
-                }
-            }
-            return EncryptSign(sb.ToString());
-        }
 
         /// <summary>
         /// 签名加密
@@ -261,7 +273,7 @@ namespace ZyGames.Framework.RPC.IO
         /// <returns></returns>
         protected virtual string EncryptSign(string sign)
         {
-            return SignUtils.PasswordMd5(sign).ToLower();
+            return SignUtils.EncodeSign(sign, SignKey);
         }
     }
 }

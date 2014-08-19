@@ -60,7 +60,7 @@ namespace ZyGames.Framework.Game.Runtime
 
         private static int _isRunning;
 
-        private static EnvironmentSetting _setting;
+        private static EnvironmentSetting _setting = new EnvironmentSetting();
         ///<summary>
         /// The environment configuration information.
         ///</summary>
@@ -107,9 +107,9 @@ namespace ZyGames.Framework.Game.Runtime
         /// <summary>
         /// Initialize entity cache.
         /// </summary>
-        public static void InitializeCache()
+        public static void InitializeCache(ICacheSerializer serializer)
         {
-            CacheFactory.Initialize(new CacheSetting());
+            CacheFactory.Initialize(new CacheSetting(), serializer);
         }
 
         /// <summary>
@@ -141,7 +141,7 @@ namespace ZyGames.Framework.Game.Runtime
                 TraceLog.WriteError(error);
                 return;
             }
-            RedisConnectionPool.Initialize();
+            RedisConnectionPool.Initialize(_setting.Serializer);
             if (!RedisConnectionPool.CheckConnect())
             {
                 string error = string.Format("Error: the redis server is not started.");
@@ -157,7 +157,6 @@ namespace ZyGames.Framework.Game.Runtime
                 ProtoBufUtils.LoadProtobufType(_setting.EntityAssembly);
                 EntitySchemaSet.LoadAssembly(_setting.EntityAssembly);
             }
-            EntitySchemaSet.StartCheckTableTimer();
 
             ZyGameBaseConfigManager.Intialize();
             //init script.
@@ -172,10 +171,10 @@ namespace ZyGames.Framework.Game.Runtime
             }
             ScriptEngines.RegisterModelChangedBefore(OnModelChangeBefore);
             ScriptEngines.RegisterModelChangedAfter(OnModelChangeAtfer);
-
             ScriptEngines.Initialize();
             Language.SetLang();
-            CacheFactory.Initialize(cacheSetting);
+            CacheFactory.Initialize(cacheSetting, _setting.Serializer);
+            EntitySchemaSet.StartCheckTableTimer();
             Global = new ContextCacheSet<CacheItem>("__gameenvironment_global");
             IsRunning = true;
         }

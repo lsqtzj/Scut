@@ -22,9 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using ZyGames.Framework.Common;
 using ZyGames.Framework.Game.Context;
 using ZyGames.Framework.Game.Lang;
@@ -163,43 +160,50 @@ namespace ZyGames.Framework.Game.Contract.Action
             }
             return true;
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        protected virtual ILogin CreateLogin()
+        {
+            return LoginProxy.GetLogin();
+        }
         /// <summary>
         /// 子类实现Action处理
         /// </summary>
         /// <returns></returns>
         public override bool TakeAction()
         {
-            ILogin login = LoginProxy.GetLogin();
+            ILogin login = CreateLogin();
             if (login != null && login.CheckLogin())
             {
                 Uid = login.UserID;
                 Sid = Current.SessionId;
                 UserId = Uid.ToInt();
                 PassportId = login.PassportID;
-                var session = GameSession.Get(Sid);
-                if (session != null)
-                {
-                    session.BindIdentity(UserId);
-                }
-                UserType = SnsManager.GetUserType(PassportId);
+                UserType = login.UserType;
+
                 SetParameter(login);
-                if (!GetError() && DoSuccess(UserId))
+                IUser user;
+                if (!GetError() && DoSuccess(UserId, out user))
                 {
-                    if (UserFactory != null)
+                    var session = GameSession.Get(Sid);
+                    if (session != null)
                     {
-                        var user = UserFactory(UserId);
                         if (user != null)
                         {
-                            Current.User = user;
+                            session.Bind(user);
                         }
+                        return true;
                     }
-                    return true;
                 }
             }
             else
             {
                 Uid = string.Empty;
                 Sid = string.Empty;
+                UserId = 0;
                 ErrorCode = Language.Instance.ErrorCode;
                 ErrorInfo = Language.Instance.PasswordError;
             }
@@ -221,11 +225,13 @@ namespace ZyGames.Framework.Game.Contract.Action
         {
             return true;
         }
+
         /// <summary>
         /// Dos the success.
         /// </summary>
         /// <returns><c>true</c>, if success was done, <c>false</c> otherwise.</returns>
         /// <param name="userId">User identifier.</param>
-        protected abstract bool DoSuccess(int userId);
+        /// <param name="user"></param>
+        protected abstract bool DoSuccess(int userId, out IUser user);
     }
 }

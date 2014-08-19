@@ -27,7 +27,6 @@ using System.Data;
 using System.Text;
 using ZyGames.Framework.Common;
 using MySql.Data.MySqlClient;
-using ZyGames.Framework.Common.Log;
 
 namespace ZyGames.Framework.Data.MySql
 {
@@ -283,7 +282,7 @@ namespace ZyGames.Framework.Data.MySql
         /// <returns></returns>
         private string ConvertToDbType(Type type, string dbType, long length, int scale, bool isKey, string fieldName)
         {
-            if (type.Equals(typeof(Int64)))
+            if (type.Equals(typeof(Int64)) || type.Equals(typeof(UInt64)))
             {
                 return "BigInt";
             }
@@ -303,7 +302,7 @@ namespace ZyGames.Framework.Data.MySql
             {
                 return "Float";
             }
-            if (type.IsEnum || type.Equals(typeof(Int32)))
+            if (type.IsEnum || type.Equals(typeof(Int32)) || type.Equals(typeof(UInt32)))
             {
                 return "Int";
             }
@@ -311,7 +310,7 @@ namespace ZyGames.Framework.Data.MySql
             {
                 return "Real";
             }
-            if (type.Equals(typeof(Int16)))
+            if (type.Equals(typeof(Int16)) || type.Equals(typeof(UInt16)))
             {
                 return "SmallInt";
             }
@@ -343,9 +342,16 @@ namespace ZyGames.Framework.Data.MySql
 
             if (string.Equals(dbType, "text", StringComparison.CurrentCultureIgnoreCase))
             {
-                return dbType;
+                return "text";
             }
-
+            if (string.Equals(dbType, "longtext", StringComparison.CurrentCultureIgnoreCase))
+            {
+                return "longtext";
+            }
+            if (string.Equals(dbType, "longblob", StringComparison.CurrentCultureIgnoreCase))
+            {
+                return "longblob";
+            }
             return "blob";
         }
 
@@ -363,7 +369,8 @@ namespace ZyGames.Framework.Data.MySql
                 command.AppendFormat("CREATE TABLE {0}", FormatName(tableName));
                 command.AppendLine("(");
                 List<string> keys;
-                bool hasColumn = CheckProcessColumns(command, columns, out keys);
+                int identityNo;
+                bool hasColumn = CheckProcessColumns(command, columns, out keys, out identityNo);
                 if (keys.Count > 0)
                 {
                     command.AppendLine(",");
@@ -373,7 +380,8 @@ namespace ZyGames.Framework.Data.MySql
                 string charSet = string.IsNullOrEmpty(ConnectionSetting.CharSet)
                     ? " CharSet=gbk"
                     : " CharSet=" + ConnectionSetting.CharSet;
-                command.AppendFormat(") ENGINE=InnoDB{0};", charSet);
+                string autoincrement = identityNo > 0 ? " AUTO_INCREMENT=" + identityNo : "";
+                command.AppendFormat("){0} ENGINE=InnoDB{1};", autoincrement, charSet);
                 if (hasColumn)
                 {
                     MySqlHelper.ExecuteNonQuery(ConnectionString, command.ToString());
@@ -385,10 +393,11 @@ namespace ZyGames.Framework.Data.MySql
             }
         }
 
-        private bool CheckProcessColumns(StringBuilder command, DbColumn[] columns, out List<string> keys, bool isModify = false)
+        private bool CheckProcessColumns(StringBuilder command, DbColumn[] columns, out List<string> keys, out int identityNo, bool isModify = false)
         {
             keys = new List<string>();
             int index = 0;
+            identityNo = 0;
             foreach (var dbColumn in columns)
             {
                 if (isModify != dbColumn.IsModify)
@@ -403,6 +412,8 @@ namespace ZyGames.Framework.Data.MySql
                 {
                     keys.Add(FormatName(dbColumn.Name));
                 }
+                if (dbColumn.IsIdentity) identityNo = dbColumn.IdentityNo;
+
                 command.AppendFormat("    {0} {1}{2}{3}",
                                      FormatName(dbColumn.Name),
                                      ConvertToDbType(dbColumn.Type, dbColumn.DbType, dbColumn.Length, dbColumn.Scale, dbColumn.IsKey, dbColumn.Name),
@@ -410,7 +421,6 @@ namespace ZyGames.Framework.Data.MySql
                                      (dbColumn.IsIdentity ? " AUTO_INCREMENT" : ""));
                 index++;
             }
-
             return index > 0;
         }
 
@@ -426,14 +436,20 @@ namespace ZyGames.Framework.Data.MySql
             StringBuilder command = new StringBuilder();
             try
             {
-                command.AppendFormat("ALTER TABLE {0}", FormatName(tableName));
+                string dbTableName = FormatName(tableName);
+                command.AppendFormat("ALTER TABLE {0}", dbTableName);
                 command.AppendLine(" ADD COLUMN (");
                 List<string> keys;
-                bool hasColumn = CheckProcessColumns(command, columns, out keys);
+                int identityNo;
+                bool hasColumn = CheckProcessColumns(command, columns, out keys, out identityNo);
                 command.Append(");");
                 if (hasColumn)
                 {
                     MySqlHelper.ExecuteNonQuery(ConnectionString, command.ToString());
+                    if (identityNo > 0)
+                    {
+                        MySqlHelper.ExecuteNonQuery(ConnectionString, string.Format("ALTER TABLE {0} AUTO_INCREMENT={1};", dbTableName, identityNo));
+                    }
                 }
 
                 command.Clear();
@@ -454,36 +470,33 @@ namespace ZyGames.Framework.Data.MySql
                     {
                         command.AppendLine("");
                     }
-
                     //ALTER TABLE `test`.`tb1`     CHANGE `Id4` `Id4t` BIGINT(20) NULL ;
-
-                    command.AppendFormat("ALTER TABLE {0} CHANGE {1} {1} {2} {3}{4};",
-                                         FormatName(tableName),
+                    command.AppendFormat("ALTER TABLE {0} CHANGE {1} {1} {2} {3};",
+                                         dbTableName,
                                          FormatName(dbColumn.Name),
                                          ConvertToDbType(dbColumn.Type, dbColumn.DbType, dbColumn.Length, dbColumn.Scale, dbColumn.IsKey, dbColumn.Name),
-                                         dbColumn.Isnullable ? "" : " NOT NULL",
-                                         (dbColumn.IsIdentity ? " AUTO_INCREMENT" : ""));
+                                         dbColumn.Isnullable ? "" : " NOT NULL");
                     index++;
                 }
-                //此处MySQL的处理方式不太一样
+                //此处MySQL的处理主键方式不太一样
                 if (keyColumns.Count > 0)
                 {
                     string[] keyArray = new string[keyColumns.Count];
-                    command.AppendFormat("ALTER TABLE {0} DROP PRIMARY KEY;", FormatName(tableName));
+                    command.AppendFormat("ALTER TABLE {0} DROP PRIMARY KEY;", dbTableName);
                     command.AppendLine();
                     int i = 0;
                     foreach (var keyColumn in keyColumns)
                     {
                         keyArray[i] = FormatName(keyColumn.Name);
                         command.AppendFormat("ALTER TABLE {0} CHANGE {1} {1} {2} not null;",
-                                             FormatName(tableName),
+                                             dbTableName,
                                              FormatName(keyColumn.Name),
                                              ConvertToDbType(keyColumn.Type, keyColumn.DbType, keyColumn.Length, keyColumn.Scale, keyColumn.IsKey, keyColumn.Name));
                         command.AppendLine();
                         i++;
                         index++;
                     }
-                    command.AppendFormat("ALTER TABLE {0} ADD PRIMARY KEY ({1});", FormatName(tableName), FormatQueryColumn(",", keyArray));
+                    command.AppendFormat("ALTER TABLE {0} ADD PRIMARY KEY ({1});", dbTableName, FormatQueryColumn(",", keyArray));
                 }
                 if (index > 0)
                 {
@@ -536,9 +549,40 @@ namespace ZyGames.Framework.Data.MySql
         /// <param name="paramName"></param>
         /// <param name="value"></param>
         /// <returns></returns>
+        public override IDataParameter CreateParameterByLongText(string paramName, object value)
+        {
+            return MySqlParamHelper.MakeInParam(paramName, MySqlDbType.LongText, 0, value);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="paramName"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public override IDataParameter CreateParameterByText(string paramName, object value)
         {
             return MySqlParamHelper.MakeInParam(paramName, MySqlDbType.Text, 0, value);
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="paramName"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public override IDataParameter CreateParameterLongBlob(string paramName, object value)
+        {
+            return MySqlParamHelper.MakeInParam(paramName, MySqlDbType.LongBlob, 0, value);
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="paramName"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public override IDataParameter CreateParameterByBlob(string paramName, object value)
+        {
+            return MySqlParamHelper.MakeInParam(paramName, MySqlDbType.Blob, 0, value);
         }
 
         /// <summary>

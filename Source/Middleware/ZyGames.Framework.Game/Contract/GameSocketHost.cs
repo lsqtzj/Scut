@@ -22,41 +22,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 using System;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
-using System.Text;
 using System.Threading;
-using System.Web;
 using ZyGames.Framework.Common;
 using ZyGames.Framework.Common.Configuration;
 using ZyGames.Framework.Common.Log;
-using ZyGames.Framework.Common.Reflect;
-using ZyGames.Framework.Game.Context;
 using ZyGames.Framework.Game.Lang;
 using ZyGames.Framework.Game.Runtime;
 using ZyGames.Framework.Game.Service;
-using ZyGames.Framework.Net;
 using ZyGames.Framework.RPC.Sockets;
 using ZyGames.Framework.RPC.IO;
-using ZyGames.Framework.RPC.Sockets.Threading;
-using ZyGames.Framework.Script;
 
 namespace ZyGames.Framework.Game.Contract
 {
     /// <summary>
     /// 游戏服Socket通讯宿主基类
     /// </summary>
-    public abstract class GameSocketHost
+    public abstract class GameSocketHost : GameBaseHost
     {
         private static int httpRequestTimeout = ConfigUtils.GetSetting("Game.Http.Timeout", "120000").ToInt();
-        private ConcurrentQueue<RequestPackage> requestQueue = new ConcurrentQueue<RequestPackage>();
-        private ConcurrentQueue<RequestPackage> lockedQueue = new ConcurrentQueue<RequestPackage>();
-
-        private ManualResetEvent singal = new ManualResetEvent(false);
-        private Thread queueProcessThread;
-        private SmartThreadPool threadPool;
+        //private SmartThreadPool threadPool;
         private SocketListener socketLintener;
         private HttpListener httpListener;
 
@@ -64,43 +50,31 @@ namespace ZyGames.Framework.Game.Contract
         /// The enable http.
         /// </summary>
         protected bool EnableHttp;
-        /// <summary>
-        /// The receive number.
-        /// </summary>
-        internal protected int receiveNum;
 
-        /// <summary>
-        /// The timeout drop number.
-        /// </summary>
-        internal int timeoutDropNum = 0;
-        /// <summary>
-        /// The running number.
-        /// </summary>
-        internal protected int runningNum;
-        private Timer _LockedQueueChecker;
-        /// <summary>
-        /// is running process queue.
-        /// </summary>
-        private int _runningQueue;
-
-        /// <summary>
-        /// Gets the blocking number.
-        /// </summary>
-        /// <value>The blocking number.</value>
-        internal protected int blockingNum { get { return lockedQueue.Count; } }
 
         /// <summary>
         /// Action repeater
         /// </summary>
-        public IActionDispatcher ActionDispatcher { get; set; }
+        public IActionDispatcher ActionDispatcher
+        {
+            get { return _setting == null ? null : _setting.ActionDispatcher; }
+            set
+            {
+                if (_setting != null)
+                {
+                    _setting.ActionDispatcher = value;
+                }
+            }
+        }
 
+        private EnvironmentSetting _setting;
         /// <summary>
         /// 
         /// </summary>
         protected GameSocketHost()
         {
-            ActionDispatcher = new ActionDispatcher();
-            int port = GameEnvironment.Setting.GamePort;
+            _setting = GameEnvironment.Setting;
+            int port = _setting != null ? _setting.GamePort : 0;
             IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, port);
 
             int maxConnections = ConfigUtils.GetSetting("MaxConnections", 10000);
@@ -110,8 +84,8 @@ namespace ZyGames.Framework.Game.Contract
             int expireInterval = ConfigUtils.GetSetting("ExpireInterval", 600) * 1000;
             int expireTime = ConfigUtils.GetSetting("ExpireTime", 3600) * 1000;
 
-            threadPool = new SmartThreadPool(180 * 1000, 100, 5);
-            threadPool.Start();
+            //threadPool = new SmartThreadPool(180 * 1000, 100, 5);
+            //threadPool.Start();
 
             var socketSettings = new SocketSettings(maxConnections, backlog, maxAcceptOps, bufferSize, localEndPoint, expireInterval, expireTime);
             socketLintener = new SocketListener(socketSettings);
@@ -137,10 +111,6 @@ namespace ZyGames.Framework.Game.Contract
                     httpListener.Prefixes.Add(string.Format("{0}:{1}/{2}/", address, httpPort, httpName));
                 }
             }
-            Interlocked.Exchange(ref _runningQueue, 1);
-            queueProcessThread = new Thread(ProcessQueue);
-            queueProcessThread.Start();
-            _LockedQueueChecker = new Timer(LockedQueueChecker, null, 100, 100);
         }
 
         private void socketLintener_OnConnectCompleted(object sender, ConnectionEventArgs e)
@@ -178,7 +148,6 @@ namespace ZyGames.Framework.Game.Contract
         {
             try
             {
-                Interlocked.Increment(ref receiveNum);
                 OnReceivedBefore(e);
                 RequestPackage package;
                 if (!ActionDispatcher.TryDecodePackage(e, out package))
@@ -190,10 +159,8 @@ namespace ZyGames.Framework.Game.Contract
                 {
                     return;
                 }
-                package.Session = session;
-                package.ReceiveTime = DateTime.Now;
-                requestQueue.Enqueue(package);
-                singal.Set();
+                package.Bind(session);
+                ProcessPackage(package);
             }
             catch (Exception ex)
             {
@@ -223,7 +190,6 @@ namespace ZyGames.Framework.Game.Contract
                 session.Refresh();
                 OnHeartbeat(session);
                 session.ExitSession();
-                Interlocked.Decrement(ref runningNum);
                 return true;
             }
             return false;
@@ -263,72 +229,8 @@ namespace ZyGames.Framework.Game.Contract
         {
         }
 
-        void ProcessQueue(object state)
+        private void ProcessPackage(RequestPackage package)
         {
-            try
-            {
-                while (_runningQueue == 1)
-                {
-                    singal.WaitOne();
-                    while (_runningQueue == 1)
-                    {
-                        try
-                        {
-                            RequestPackage package;
-                            if (requestQueue.TryDequeue(out package))
-                            {
-                                if (package.Session == null || !package.Session.EnterSession()) lockedQueue.Enqueue(package);
-                                else
-                                {
-                                    Interlocked.Increment(ref runningNum);
-                                    threadPool.QueueWorkItem(ProcessPackage, package);
-                                }
-                            }
-                            else
-                            {
-                                break;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            TraceLog.WriteError("ProcessQueue request error:{0}", ex);
-                        }
-                    }
-                    //if (isInStopping) break;
-                    singal.Reset();
-                }
-            }
-            catch (Exception er)
-            {
-                TraceLog.WriteError("ProcessQueue error:{0}", er);
-            }
-        }
-
-        void LockedQueueChecker(object state)
-        {
-            try
-            {
-                RequestPackage package;
-                while (lockedQueue.TryDequeue(out package))
-                {
-                    if (MathUtils.Now.Subtract(package.ReceiveTime).TotalSeconds >= 30)
-                    {
-                        Interlocked.Increment(ref timeoutDropNum);
-                        continue;
-                    }
-                    requestQueue.Enqueue(package);
-                    singal.Set();
-                }
-            }
-            catch (Exception ex)
-            {
-                TraceLog.WriteError("LockedQueue error:{0}", ex);
-            }
-        }
-
-        private void ProcessPackage(object state)
-        {
-            var package = (RequestPackage)state;
             if (package == null) return;
 
             var session = package.Session;
@@ -337,11 +239,11 @@ namespace ZyGames.Framework.Game.Contract
                 byte[] data = new byte[0];
                 if (!string.IsNullOrEmpty(package.RouteName))
                 {
-                    ActionGetter httpGet = ActionDispatcher.GetActionGetter(package);
-                    if (CheckRemote(package.RouteName, httpGet))
+                    ActionGetter actionGetter = ActionDispatcher.GetActionGetter(package);
+                    if (CheckRemote(package.RouteName, actionGetter))
                     {
                         MessageStructure response = new MessageStructure();
-                        OnCallRemote(package.RouteName, httpGet, response);
+                        OnCallRemote(package.RouteName, actionGetter, response);
                         data = response.PopBuffer();
                     }
                 }
@@ -373,7 +275,6 @@ namespace ZyGames.Framework.Game.Contract
             finally
             {
                 session.ExitSession();
-                Interlocked.Decrement(ref runningNum);
             }
         }
 
@@ -411,68 +312,35 @@ namespace ZyGames.Framework.Game.Contract
                 HttpListener listener = (HttpListener)result.AsyncState;
                 HttpListenerContext context = listener.EndGetContext(result);
                 listener.BeginGetContext(OnHttpRequest, listener);
-                HttpListenerRequest request = context.Request;
-                HttpListenerResponse response = context.Response;
-                string sid = request.QueryString["sid"];
-                GameSession session;
-                if (string.IsNullOrEmpty(sid))
-                {
-                    session = GameSession.CreateNew(Guid.NewGuid(), request);
-                }
-                else
-                {
-                    session = GameSession.Get(sid) ?? GameSession.CreateNew(Guid.NewGuid(), request);
-                }
 
-                string data = "";
-                if (Environment.OSVersion.Platform == PlatformID.Unix)
+                RequestPackage package;
+                if (!ActionDispatcher.TryDecodePackage(context, out package))
                 {
-                    if (string.Compare(request.HttpMethod, "get", true) == 0)
-                    {
-                        data = request.RawUrl.Substring(8);
-                        data = HttpUtility.UrlDecode(data);
-                    }
-                }
-                else
-                {
-                    data = request.QueryString["d"];
-                }
-
-                if (string.IsNullOrEmpty(data))
-                {
-                    using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
-                    {
-                        data = reader.ReadToEnd();
-                        data = HttpUtility.ParseQueryString(data)["d"];
-                    }
-                }
-
-                int statuscode = 0;
-                Dictionary<string, string> param = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
-                if (data != null)
-                {
-                    var nvc = HttpUtility.ParseQueryString(data);
-                    foreach (var key in nvc.AllKeys)
-                    {
-                        param[key] = nvc[key];
-                    }
-                }
-                statuscode = CheckHttpParam(param);
-
-                if (statuscode != (int)HttpStatusCode.OK)
-                {
-                    response.StatusCode = statuscode;
-                    response.Close();
                     return;
                 }
 
-                var httpresponse = new SocketGameResponse();
-                httpresponse.WriteErrorCallback += new ActionDispatcher().ResponseError;
+                GameSession session;
+                if (package.ProxySid != Guid.Empty)
+                {
+                    session = GameSession.Get(package.ProxySid) ?? GameSession.CreateNew(package.ProxySid, context.Request);
+                    session.ProxySid = package.ProxySid;
+                }
+                else
+                {
+                    session = GameSession.Get(package.SessionId) ?? GameSession.CreateNew(Guid.NewGuid(), context.Request);
+                }
+                package.Bind(session);
 
-                ActionGetter httpGet = ActionDispatcher.GetActionGetter(new RequestPackage() { UrlParam = data, Session = session });
-                httpGet["UserHostAddress"] = session.EndAddress;
-                httpGet["ssid"] = session.KeyCode.ToString("N");
-                httpGet["http"] = "1";
+                ActionGetter httpGet = ActionDispatcher.GetActionGetter(package);
+                if (package.IsUrlParam)
+                {
+                    httpGet["UserHostAddress"] = session.EndAddress;
+                    httpGet["ssid"] = session.KeyCode.ToString("N");
+                    httpGet["http"] = "1";
+                }
+
+                var httpresponse = new SocketGameResponse();
+                httpresponse.WriteErrorCallback += new ScutActionDispatcher().ResponseError;
 
                 var clientConnection = new HttpClientConnection
                 {
@@ -482,10 +350,21 @@ namespace ZyGames.Framework.Game.Contract
                     GameResponse = httpresponse
                 };
                 clientConnection.TimeoutTimer = new Timer(OnHttpRequestTimeout, clientConnection, httpRequestTimeout, Timeout.Infinite);
-
-
-                DoAction(httpGet, httpresponse);
-                byte[] respData = httpresponse.ReadByte();
+                byte[] respData = new byte[0];
+                if (!string.IsNullOrEmpty(package.RouteName))
+                {
+                    if (CheckRemote(package.RouteName, httpGet))
+                    {
+                        MessageStructure response = new MessageStructure();
+                        OnCallRemote(package.RouteName, httpGet, response);
+                        respData = response.PopBuffer();
+                    }
+                }
+                else
+                {
+                    DoAction(httpGet, httpresponse);
+                    respData = httpresponse.ReadByte();
+                }
                 OnHttpResponse(clientConnection, respData, 0, respData.Length);
 
             }
@@ -493,19 +372,6 @@ namespace ZyGames.Framework.Game.Contract
             {
                 TraceLog.WriteError("OnHttpRequest error:{0}", ex);
             }
-        }
-
-        private int CheckHttpParam(Dictionary<string, string> param)
-        {
-            if (!param.ContainsKey("actionid"))
-            {
-                return (int)HttpStatusCode.BadRequest;
-            }
-            if (!param.ContainsKey("msgid"))
-            {
-                return (int)HttpStatusCode.BadRequest;
-            }
-            return (int)HttpStatusCode.OK;
         }
 
         private void OnHttpRequestTimeout(object state)
@@ -552,7 +418,7 @@ namespace ZyGames.Framework.Game.Contract
         /// <summary>
         /// 
         /// </summary>
-        public void Start(string[] args)
+        public override void Start(string[] args)
         {
             socketLintener.StartListen();
             if (EnableHttp)
@@ -575,9 +441,8 @@ namespace ZyGames.Framework.Game.Contract
         /// <summary>
         /// 
         /// </summary>
-        public void Stop()
+        public override void Stop()
         {
-            Interlocked.Exchange(ref _runningQueue, 0);
             if (EnableHttp)
             {
                 httpListener.Stop();
@@ -586,17 +451,9 @@ namespace ZyGames.Framework.Game.Contract
             OnServiceStop();
             try
             {
-                singal.Set();
-                threadPool.Dispose();
-                queueProcessThread.Abort();
-                _LockedQueueChecker.Dispose();
-                singal.Dispose();
+                //threadPool.Dispose();
                 EntitySyncManger.Dispose();
-
-                threadPool = null;
-                queueProcessThread = null;
-                _LockedQueueChecker = null;
-                singal = null;
+                //threadPool = null;
             }
             catch
             {
@@ -604,91 +461,6 @@ namespace ZyGames.Framework.Game.Contract
             GC.SuppressFinalize(this);
         }
 
-        private delegate void RemoteHandle(ActionGetter httpGet, MessageHead head, MessageStructure writer);
-
-        private void OnCallRemote(string route, ActionGetter httpGet, MessageStructure response)
-        {
-            try
-            {
-                string[] mapList = route.Split('.');
-                string funcName = "";
-                string routeName = "";
-                if (mapList.Length > 1)
-                {
-                    funcName = mapList[mapList.Length - 1];
-                    routeName = string.Join("/", mapList, 0, mapList.Length - 1);
-                }
-                string routeFile = "";
-                string typeName = string.Format("Game.Script.Remote.{0}", routeName);
-                int actionId = httpGet.GetActionId();
-                MessageHead head = new MessageHead(actionId);
-                if (!ScriptEngines.SettupInfo.DisablePython)
-                {
-                    routeFile = string.Format("Remote.{0}", routeName);
-                    dynamic scope = ScriptEngines.ExecutePython(routeFile);
-                    if (scope != null)
-                    {
-                        var funcHandle = scope.GetVariable<RemoteHandle>(funcName);
-                        if (funcHandle != null)
-                        {
-                            funcHandle(httpGet, head, response);
-                            response.WriteBuffer(head);
-                            return;
-                        }
-                    }
-                }
-                routeFile = string.Format("Remote.{0}", routeName);
-                var instance = (object)ScriptEngines.Execute(routeFile, typeName);
-                if (instance != null)
-                {
-                    var result = ObjectAccessor.Create(instance, true)[funcName];
-                }
-            }
-            catch (Exception ex)
-            {
-                TraceLog.WriteError("{0}", ex);
-            }
-        }
-
-        /// <summary>
-        /// Checks the remote.
-        /// </summary>
-        /// <returns><c>true</c>, if remote was checked, <c>false</c> otherwise.</returns>
-        /// <param name="route">Route.</param>
-        /// <param name="actionGetter">Http get.</param>
-        protected virtual bool CheckRemote(string route, ActionGetter actionGetter)
-        {
-            return true;
-        }
-
-        private void DoAction(ActionGetter actionGetter, BaseGameResponse response)
-        {
-            if (GameEnvironment.IsRunning)
-            {
-                OnRequested(actionGetter, response);
-                ActionFactory.Request(actionGetter, response, GetUser);
-            }
-            else
-            {
-                response.WriteError(actionGetter, Language.Instance.ErrorCode, Language.Instance.ServerMaintain);
-            }
-        }
-
-        /// <summary>
-        /// Raises the requested event.
-        /// </summary>
-        /// <param name="actionGetter">Http get.</param>
-        /// <param name="response">Response.</param>
-        protected virtual void OnRequested(ActionGetter actionGetter, BaseGameResponse response)
-        {
-        }
-
-        /// <summary>
-        /// Get user object by userid
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <returns></returns>
-        protected abstract BaseUser GetUser(int userId);
 
         /// <summary>
         /// Raises the start affer event.
