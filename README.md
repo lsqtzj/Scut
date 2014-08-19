@@ -56,7 +56,7 @@ Language:
 
 Demo
 ----------------
-https://github.com/ScutGame/Scut-samples
+https://github.com/ScutGame/Scut-samples<br />
 https://git.oschina.net/scutgame/Scut-samples
 
 
